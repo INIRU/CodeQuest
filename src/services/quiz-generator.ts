@@ -107,20 +107,28 @@ function truncateCode(code: string): string {
   return joined.length > MAX_CHARS ? joined.slice(0, MAX_CHARS) : joined
 }
 
+function extractJson(text: string): string {
+  // Try to find JSON in markdown code block
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (codeBlockMatch) return codeBlockMatch[1].trim()
+
+  // Try to find first { to last }
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  if (start !== -1 && end > start) return text.slice(start, end + 1)
+
+  return text.trim()
+}
+
 function extractJsonFromResponse(text: string): unknown {
-  // Try to extract JSON from ```json ... ``` blocks
-  const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/)
-  if (codeBlockMatch) {
-    return JSON.parse(codeBlockMatch[1])
+  const jsonString = extractJson(text)
+  try {
+    return JSON.parse(jsonString)
+  } catch (err) {
+    throw new Error(
+      `Failed to parse JSON from AI response: ${err instanceof Error ? err.message : String(err)}\n\nRaw response:\n${text}`,
+    )
   }
-
-  // Try to find JSON object directly
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
-  if (jsonMatch) {
-    return JSON.parse(jsonMatch[0])
-  }
-
-  throw new Error('No JSON found in AI response')
 }
 
 /**
@@ -145,12 +153,12 @@ export async function generateQuiz(
 
   const systemMessage: Message = {
     role: 'system',
-    content: `You are a coding quiz generator. Generate a ${quizType} quiz at ${difficulty} difficulty level for ${language} code.
+    content: `You are a coding quiz generator. You MUST respond with ONLY a valid JSON object. Do NOT include any text before or after the JSON. Do NOT wrap it in markdown code blocks.
 
-You MUST respond with ONLY a valid JSON object matching this exact schema:
-${schemaHint}
+Generate a ${quizType} quiz at ${difficulty} difficulty level for ${language} code.
 
-Do not include any explanation outside the JSON. The JSON must be valid and parseable.`,
+The JSON must match this exact schema:
+${schemaHint}`,
   }
 
   const userMessage: Message = {

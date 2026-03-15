@@ -32,6 +32,8 @@ const en = {
     generateFromFile: 'Generate from entire file',
     linesSelected: 'lines selected',
     largeFile: 'Large file ({lines} lines). Only first 500 lines shown. Select a portion for quiz generation.',
+    urlLabel: 'GitHub Repository URL',
+    loadRepo: 'Load',
   },
   // My Repos
   myRepos: {

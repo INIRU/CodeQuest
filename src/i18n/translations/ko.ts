@@ -29,6 +29,8 @@ const ko = {
     generateFromFile: '전체 파일로 문제 생성',
     linesSelected: '줄 선택됨',
     largeFile: '큰 파일 ({lines}줄). 처음 500줄만 표시됩니다. 일부를 선택해주세요.',
+    urlLabel: 'GitHub 레포지토리 URL',
+    loadRepo: '불러오기',
   },
   myRepos: {
     title: '내 레포',

@@ -19,11 +19,14 @@ export default function MainLayout() {
   const { t } = useTranslation()
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div style={{ display: 'flex' }}>
       <aside
         style={{
           width: 64,
-          minHeight: '100vh',
+          height: '100vh',
+          position: 'fixed',
+          top: 0,
+          left: 0,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -31,6 +34,7 @@ export default function MainLayout() {
           paddingBottom: 16,
           borderRight: '1px solid var(--border)',
           backgroundColor: 'var(--surface)',
+          zIndex: 50,
         }}
       >
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -112,7 +116,7 @@ export default function MainLayout() {
         </div>
       </aside>
 
-      <main style={{ flex: 1, overflow: 'auto' }}>
+      <main style={{ flex: 1, overflow: 'auto', marginLeft: 64, minHeight: '100vh' }}>
         <Outlet />
       </main>
     </div>

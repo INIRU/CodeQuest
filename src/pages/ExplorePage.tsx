@@ -9,6 +9,7 @@ import RepoCard from '@/components/github/RepoCard'
 import FileTree from '@/components/github/FileTree'
 import CodeViewer from '@/components/github/CodeViewer'
 import QuizGenerateModal from '@/components/github/QuizGenerateModal'
+import { RepoUrlInput } from '@/components/github/RepoUrlInput'
 import { useTranslation } from '@/i18n'
 import type { GitHubRepo, GitHubTreeItem } from '@/types'
 
@@ -48,6 +49,37 @@ export default function ExplorePage() {
 
   const [quizModalOpen, setQuizModalOpen] = useState(false)
   const [quizCode, setQuizCode] = useState('')
+  const [urlLoading, setUrlLoading] = useState(false)
+
+  const handleUrlLoad = useCallback(async (owner: string, repo: string) => {
+    const fullName = `${owner}/${repo}`
+    const fakeRepo: GitHubRepo = {
+      id: Date.now(),
+      full_name: fullName,
+      name: repo,
+      owner: { login: owner, avatar_url: '' },
+      description: null,
+      language: null,
+      stargazers_count: 0,
+      html_url: `https://github.com/${fullName}`,
+      updated_at: new Date().toISOString(),
+    }
+    setSelectedRepo(fakeRepo)
+    setSelectedFilePath(null)
+    setFileContent(null)
+    setTreeLoading(true)
+    setTreeError(null)
+    setUrlLoading(true)
+    try {
+      const items = await fetchRepoTree(owner, repo, undefined, githubPat || undefined)
+      setTree(items)
+    } catch (err) {
+      setTreeError(err instanceof Error ? err.message : 'Failed to fetch file tree')
+    } finally {
+      setTreeLoading(false)
+      setUrlLoading(false)
+    }
+  }, [githubPat])
 
   const handleSelectRepo = useCallback(async (repo: GitHubRepo) => {
     setSelectedRepo(repo)
@@ -140,6 +172,13 @@ export default function ExplorePage() {
               {lang}
             </Badge>
           ))}
+        </div>
+      )}
+
+      {/* GitHub URL direct input */}
+      {!selectedRepo && (
+        <div style={{ marginBottom: 20 }}>
+          <RepoUrlInput onLoad={handleUrlLoad} loading={urlLoading} />
         </div>
       )}
 

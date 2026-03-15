@@ -26,54 +26,37 @@ const defaultPresets: Record<string, AIPreset> = {
     name: 'OpenAI',
     url: 'https://api.openai.com/v1/chat/completions',
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer {{KEY}}' },
     apiKey: '',
-    bodyTemplate: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: '{{prompt}}' }],
-      temperature: 0.7,
-    }),
-    responsePath: 'choices.0.message.content',
+    bodyTemplate: '{"model":"gpt-4o-mini","messages":{{MESSAGES}},"temperature":0.7}',
+    responsePath: 'choices[0].message.content',
   },
   claude: {
-    name: 'Claude',
+    name: 'Claude (Proxy required)',
     url: 'https://api.anthropic.com/v1/messages',
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'anthropic-version': '2023-06-01',
-    },
+    headers: { 'Content-Type': 'application/json', 'x-api-key': '{{KEY}}', 'anthropic-version': '2023-06-01' },
     apiKey: '',
-    bodyTemplate: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: '{{prompt}}' }],
-    }),
-    responsePath: 'content.0.text',
+    bodyTemplate: '{"model":"claude-sonnet-4-20250514","max_tokens":4096,"messages":{{MESSAGES}}}',
+    responsePath: 'content[0].text',
   },
   gemini: {
-    name: 'Gemini',
-    url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+    name: 'Gemini (Proxy required)',
+    url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={{KEY}}',
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     apiKey: '',
-    bodyTemplate: JSON.stringify({
-      contents: [{ parts: [{ text: '{{prompt}}' }] }],
-    }),
-    responsePath: 'candidates.0.content.parts.0.text',
+    bodyTemplate: '{"contents":[{"parts":[{"text":{{PROMPT}}}]}]}',
+    responsePath: 'candidates[0].content.parts[0].text',
   },
   ollama: {
     name: 'Ollama (Local)',
-    url: 'http://localhost:11434/api/generate',
+    url: 'http://localhost:11434/api/chat',
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     apiKey: '',
-    bodyTemplate: JSON.stringify({
-      model: 'llama3',
-      prompt: '{{prompt}}',
-      stream: false,
-    }),
-    responsePath: 'response',
+    bodyTemplate: '{"model":"llama3","messages":{{MESSAGES}}}',
+    responsePath: 'message.content',
   },
 }
 
@@ -117,7 +100,13 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'codetraining-settings',
-      version: 1,
+      version: 2,
+      migrate: (persisted: unknown, version: number) => {
+        if (version < 2) {
+          return { ...(persisted as Record<string, unknown>), presets: defaultPresets }
+        }
+        return persisted as Record<string, unknown>
+      },
     }
   )
 )
