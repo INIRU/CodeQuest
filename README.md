@@ -2,6 +2,8 @@
 
 GitHub 코드 기반 AI 코딩 퀴즈 플랫폼
 
+**Live Demo:** https://iniru.github.io/CodeQuest/
+
 ## Features
 
 - **GitHub Trending 탐색** — 트렌딩 레포에서 코드를 가져와 퀴즈 생성
