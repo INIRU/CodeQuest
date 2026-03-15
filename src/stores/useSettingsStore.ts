@@ -15,6 +15,8 @@ interface SettingsState {
   setGithubPat: (pat: string) => void
   setActivePresetKey: (key: string) => void
   updatePreset: (key: string, preset: Partial<AIPreset>) => void
+  addPreset: (key: string, preset: AIPreset) => void
+  deletePreset: (key: string) => void
 }
 
 const defaultPresets: Record<string, AIPreset> = {
@@ -95,6 +97,19 @@ export const useSettingsStore = create<SettingsState>()(
             [key]: { ...state.presets[key], ...preset },
           },
         })),
+      addPreset: (key, preset) =>
+        set((state) => ({
+          presets: { ...state.presets, [key]: preset },
+          activePresetKey: key,
+        })),
+      deletePreset: (key) =>
+        set((state) => {
+          const { [key]: _, ...rest } = state.presets
+          return {
+            presets: rest,
+            activePresetKey: state.activePresetKey === key ? 'openai' : state.activePresetKey,
+          }
+        }),
     }),
     {
       name: 'codetraining-settings',

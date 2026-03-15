@@ -1,0 +1,294 @@
+import { useState } from 'react'
+import { Play, ChevronDown, ChevronUp, Check, AlertTriangle } from 'lucide-react'
+import { Button, Card } from '@/components/ui'
+import { useSettingsStore } from '@/stores/useSettingsStore'
+import { buildRequest, autoDetectResponsePath, extractByPath } from '@/services/ai'
+
+export default function APITestPanel() {
+  const presets = useSettingsStore((s) => s.presets)
+  const activePresetKey = useSettingsStore((s) => s.activePresetKey)
+  const updatePreset = useSettingsStore((s) => s.updatePreset)
+
+  const preset = presets[activePresetKey]
+
+  const [loading, setLoading] = useState(false)
+  const [statusCode, setStatusCode] = useState<number | null>(null)
+  const [responseTime, setResponseTime] = useState<number | null>(null)
+  const [rawResponse, setRawResponse] = useState<unknown>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isCorsError, setIsCorsError] = useState(false)
+  const [detectedPath, setDetectedPath] = useState<string | null>(null)
+  const [parsedText, setParsedText] = useState<string | null>(null)
+  const [requestOpen, setRequestOpen] = useState(false)
+  const [responseOpen, setResponseOpen] = useState(true)
+
+  if (!preset) return null
+
+  const testMessages = [{ role: 'user', content: "Hello, respond with 'OK'" }]
+  const builtRequest = buildRequest(preset, testMessages)
+
+  async function handleRunTest() {
+    setLoading(true)
+    setError(null)
+    setIsCorsError(false)
+    setStatusCode(null)
+    setResponseTime(null)
+    setRawResponse(null)
+    setDetectedPath(null)
+    setParsedText(null)
+
+    const start = performance.now()
+    try {
+      const response = await fetch(builtRequest.url, {
+        method: builtRequest.method,
+        headers: builtRequest.headers,
+        body: builtRequest.body,
+      })
+      const elapsed = Math.round(performance.now() - start)
+      setResponseTime(elapsed)
+      setStatusCode(response.status)
+
+      const json: unknown = await response.json()
+      setRawResponse(json)
+
+      // Auto-detect response path
+      const detected = autoDetectResponsePath(json)
+      setDetectedPath(detected)
+
+      // Try to extract with current path
+      if (preset.responsePath) {
+        const extracted = extractByPath(json, preset.responsePath)
+        if (typeof extracted === 'string') {
+          setParsedText(extracted)
+        }
+      } else if (detected) {
+        const extracted = extractByPath(json, detected)
+        if (typeof extracted === 'string') {
+          setParsedText(extracted)
+        }
+      }
+    } catch (err) {
+      const elapsed = Math.round(performance.now() - start)
+      setResponseTime(elapsed)
+
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        setIsCorsError(true)
+        setError('Network error - likely blocked by CORS policy.')
+      } else {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function handleApplyDetectedPath() {
+    if (detectedPath) {
+      updatePreset(activePresetKey, { responsePath: detectedPath })
+    }
+  }
+
+  return (
+    <Card style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
+      <Button
+        variant="primary"
+        size="sm"
+        loading={loading}
+        onClick={handleRunTest}
+      >
+        <Play size={14} />
+        Run Test
+      </Button>
+
+      {/* Status + Timing */}
+      {(statusCode !== null || responseTime !== null) && (
+        <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
+          {statusCode !== null && (
+            <span style={{
+              color: statusCode >= 200 && statusCode < 300
+                ? 'var(--success)'
+                : 'var(--error)',
+              fontWeight: 600,
+            }}>
+              Status: {statusCode}
+            </span>
+          )}
+          {responseTime !== null && (
+            <span style={{ color: 'var(--text-sub)' }}>
+              Time: {responseTime}ms
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* CORS Error Guidance */}
+      {isCorsError && (
+        <Card style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: 14 }}>
+          <AlertTriangle size={18} color="var(--error)" style={{ flexShrink: 0, marginTop: 2 }} />
+          <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.6 }}>
+            <strong style={{ color: 'var(--error)' }}>CORS Error</strong>
+            <br />
+            The API server blocked the request from the browser. To fix this:
+            <ul style={{ margin: '8px 0 0 0', paddingLeft: 20 }}>
+              <li>Use a local API endpoint (e.g., Ollama at localhost:11434)</li>
+              <li>Set up a CORS proxy (e.g., cors-anywhere)</li>
+              <li>Use an API that supports browser requests</li>
+            </ul>
+          </div>
+        </Card>
+      )}
+
+      {/* General Error */}
+      {error && !isCorsError && (
+        <p style={{ fontSize: 13, color: 'var(--error)', margin: 0 }}>{error}</p>
+      )}
+
+      {/* Request Details (collapsible) */}
+      <div>
+        <button
+          onClick={() => setRequestOpen(!requestOpen)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '4px 0',
+            border: 'none',
+            background: 'transparent',
+            color: 'var(--text-sub)',
+            fontSize: 13,
+            fontWeight: 500,
+            cursor: 'pointer',
+          }}
+        >
+          {requestOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          Request Details
+        </button>
+        {requestOpen && (
+          <pre
+            style={{
+              fontSize: 12,
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--text-sub)',
+              backgroundColor: 'var(--surface)',
+              borderRadius: 8,
+              padding: 12,
+              overflow: 'auto',
+              maxHeight: 200,
+              margin: '8px 0 0 0',
+              border: '1px solid var(--border)',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
+            }}
+          >
+            {JSON.stringify(
+              {
+                url: builtRequest.url,
+                method: builtRequest.method,
+                headers: builtRequest.headers,
+                body: JSON.parse(builtRequest.body),
+              },
+              null,
+              2,
+            )}
+          </pre>
+        )}
+      </div>
+
+      {/* Response JSON (collapsible, open by default) */}
+      {rawResponse !== null && (
+        <div>
+          <button
+            onClick={() => setResponseOpen(!responseOpen)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '4px 0',
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--text-sub)',
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            {responseOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            Response JSON
+          </button>
+          {responseOpen && (
+            <pre
+              style={{
+                fontSize: 12,
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--text-sub)',
+                backgroundColor: 'var(--surface)',
+                borderRadius: 8,
+                padding: 12,
+                overflow: 'auto',
+                maxHeight: 300,
+                margin: '8px 0 0 0',
+                border: '1px solid var(--border)',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+              }}
+            >
+              {JSON.stringify(rawResponse, null, 2)}
+            </pre>
+          )}
+        </div>
+      )}
+
+      {/* Auto-detected Path */}
+      {detectedPath && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: 13,
+          }}
+        >
+          <Check size={14} color="var(--success)" />
+          <span style={{ color: 'var(--text-sub)' }}>
+            Detected path:{' '}
+            <code
+              style={{
+                fontFamily: 'var(--font-mono)',
+                backgroundColor: 'var(--glass)',
+                padding: '2px 6px',
+                borderRadius: 4,
+              }}
+            >
+              {detectedPath}
+            </code>
+          </span>
+          <Button variant="secondary" size="sm" onClick={handleApplyDetectedPath}>
+            Apply
+          </Button>
+        </div>
+      )}
+
+      {/* Parsed Text Preview */}
+      {parsedText && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)' }}>
+            Parsed Text Preview
+          </span>
+          <div
+            style={{
+              fontSize: 13,
+              color: 'var(--text)',
+              backgroundColor: 'var(--surface)',
+              borderRadius: 8,
+              padding: 12,
+              border: '1px solid var(--border)',
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            {parsedText}
+          </div>
+        </div>
+      )}
+    </Card>
+  )
+}
