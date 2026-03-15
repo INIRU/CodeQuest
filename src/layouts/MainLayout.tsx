@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Home, Search, FolderGit2, History, Settings } from 'lucide-react'
+import { Home, Search, FolderGit2, History, Settings, Sun, Moon } from 'lucide-react'
+import { useSettingsStore } from '@/stores/useSettingsStore'
 
 const navItems = [
   { to: '/', icon: Home, label: 'Dashboard' },
@@ -10,6 +11,9 @@ const navItems = [
 ]
 
 export default function MainLayout() {
+  const theme = useSettingsStore((s) => s.theme)
+  const toggleTheme = useSettingsStore((s) => s.toggleTheme)
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <aside
@@ -51,6 +55,27 @@ export default function MainLayout() {
             </NavLink>
           ))}
         </nav>
+
+        <button
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          style={{
+            marginTop: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 40,
+            height: 40,
+            borderRadius: 10,
+            border: 'none',
+            background: 'transparent',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            transition: 'color 0.2s',
+          }}
+        >
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
       </aside>
 
       <main style={{ flex: 1, overflow: 'auto' }}>
