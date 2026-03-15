@@ -1,15 +1,16 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { RefreshCw, ArrowLeft, Lock } from 'lucide-react'
+import { RefreshCw, ArrowLeft, Lock, CheckSquare, Square, Sparkles, Loader } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Skeleton, ErrorCard, Card } from '@/components/ui'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { useGithubStore } from '@/stores/useGithubStore'
-import { fetchMyRepos, fetchRepoTree, fetchFileContent } from '@/services/github'
+import { fetchMyRepos, fetchRepoTree, fetchFileContent, fetchMultipleFiles } from '@/services/github'
 import RepoCard from '@/components/github/RepoCard'
-import FileTree from '@/components/github/FileTree'
+import FileTree, { getCodeFilePaths } from '@/components/github/FileTree'
 import CodeViewer from '@/components/github/CodeViewer'
 import QuizGenerateModal from '@/components/github/QuizGenerateModal'
+import type { MultiFileEntry } from '@/components/github/QuizGenerateModal'
 import { RepoUrlInput } from '@/components/github/RepoUrlInput'
 import { useTranslation } from '@/i18n'
 import type { GitHubRepo, GitHubTreeItem } from '@/types'
@@ -50,6 +51,18 @@ export default function MyReposPage() {
   const [quizCode, setQuizCode] = useState('')
   const [urlLoading, setUrlLoading] = useState(false)
 
+  // Multi-select state
+  const [multiSelectMode, setMultiSelectMode] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
+  const [multiFiles, setMultiFiles] = useState<MultiFileEntry[]>([])
+  const [multiFetchLoading, setMultiFetchLoading] = useState(false)
+
+  // Get all code file paths for the current tree
+  const allCodeFilePaths = useMemo(() => {
+    if (tree.length === 0) return []
+    return getCodeFilePaths(tree)
+  }, [tree])
+
   const handleUrlLoad = useCallback(async (owner: string, repo: string) => {
     const fullName = `${owner}/${repo}`
     const fakeRepo: GitHubRepo = {
@@ -66,6 +79,8 @@ export default function MyReposPage() {
     setSelectedRepo(fakeRepo)
     setSelectedFilePath(null)
     setFileContent(null)
+    setMultiSelectMode(false)
+    setSelectedFiles(new Set())
     setTreeLoading(true)
     setTreeError(null)
     setUrlLoading(true)
@@ -104,6 +119,8 @@ export default function MyReposPage() {
     setSelectedRepo(repo)
     setSelectedFilePath(null)
     setFileContent(null)
+    setMultiSelectMode(false)
+    setSelectedFiles(new Set())
     setTreeLoading(true)
     setTreeError(null)
     try {
@@ -138,12 +155,74 @@ export default function MyReposPage() {
     setTree([])
     setSelectedFilePath(null)
     setFileContent(null)
+    setMultiSelectMode(false)
+    setSelectedFiles(new Set())
   }
 
   function openQuizModal(code: string) {
+    setMultiFiles([])
     setQuizCode(code)
     setQuizModalOpen(true)
   }
+
+  // Multi-select handlers
+  function toggleMultiSelectMode() {
+    setMultiSelectMode((prev) => !prev)
+    setSelectedFiles(new Set())
+  }
+
+  const handleToggleFile = useCallback((path: string) => {
+    setSelectedFiles((prev) => {
+      const next = new Set(prev)
+      if (next.has(path)) {
+        next.delete(path)
+      } else {
+        next.add(path)
+      }
+      return next
+    })
+  }, [])
+
+  const handleToggleFolder = useCallback((paths: string[], select: boolean) => {
+    setSelectedFiles((prev) => {
+      const next = new Set(prev)
+      for (const path of paths) {
+        if (select) {
+          next.add(path)
+        } else {
+          next.delete(path)
+        }
+      }
+      return next
+    })
+  }, [])
+
+  function handleSelectAll() {
+    if (selectedFiles.size === allCodeFilePaths.length) {
+      setSelectedFiles(new Set())
+    } else {
+      setSelectedFiles(new Set(allCodeFilePaths))
+    }
+  }
+
+  async function handleGenerateFromSelected() {
+    if (!selectedRepo || selectedFiles.size === 0) return
+    setMultiFetchLoading(true)
+    try {
+      const [owner, repoName] = selectedRepo.full_name.split('/')
+      const paths = Array.from(selectedFiles)
+      const results = await fetchMultipleFiles(owner, repoName, paths, githubPat || undefined)
+      setMultiFiles(results)
+      setQuizCode('')
+      setQuizModalOpen(true)
+    } catch (err) {
+      setTreeError(err instanceof Error ? err.message : 'Failed to fetch files')
+    } finally {
+      setMultiFetchLoading(false)
+    }
+  }
+
+  const isAllSelected = allCodeFilePaths.length > 0 && selectedFiles.size === allCodeFilePaths.length
 
   // No PAT: show empty state
   if (!githubPat) {
@@ -250,6 +329,75 @@ export default function MyReposPage() {
             </>
           ) : (
             <>
+              {/* Multi-select toolbar */}
+              {!treeLoading && !treeError && tree.length > 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                    padding: '8px 8px 4px 8px',
+                    borderBottom: '1px solid var(--border)',
+                    marginBottom: 4,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Button
+                      variant={multiSelectMode ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={toggleMultiSelectMode}
+                      style={{ fontSize: 12, padding: '4px 8px' }}
+                    >
+                      {multiSelectMode ? <CheckSquare size={13} /> : <Square size={13} />}
+                      {t('explore.projectQuiz')}
+                    </Button>
+                  </div>
+                  {multiSelectMode && (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                        <button
+                          onClick={handleSelectAll}
+                          style={{
+                            border: 'none',
+                            background: 'transparent',
+                            color: 'var(--primary)',
+                            cursor: 'pointer',
+                            fontSize: 12,
+                            fontWeight: 500,
+                            padding: '2px 0',
+                          }}
+                        >
+                          {isAllSelected ? t('explore.deselectAll') : t('explore.selectAll')}
+                        </button>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                          {t('explore.filesSelected', { count: selectedFiles.size })}
+                        </span>
+                      </div>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleGenerateFromSelected}
+                        disabled={selectedFiles.size === 0 || multiFetchLoading}
+                        loading={multiFetchLoading}
+                        style={{ fontSize: 12, width: '100%' }}
+                      >
+                        {multiFetchLoading ? (
+                          <>
+                            <Loader size={13} />
+                            {t('explore.fetchingFiles')}
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={13} />
+                            {t('explore.generateFromSelected')}
+                          </>
+                        )}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
+
               {treeLoading && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: 8 }}>
                   {Array.from({ length: 10 }).map((_, i) => (
@@ -259,7 +407,14 @@ export default function MyReposPage() {
               )}
               {treeError && <ErrorCard message={treeError} />}
               {!treeLoading && !treeError && tree.length > 0 && (
-                <FileTree items={tree} onSelectFile={handleSelectFile} />
+                <FileTree
+                  items={tree}
+                  onSelectFile={handleSelectFile}
+                  multiSelect={multiSelectMode}
+                  selectedFiles={selectedFiles}
+                  onToggleFile={handleToggleFile}
+                  onToggleFolder={handleToggleFolder}
+                />
               )}
             </>
           )}
@@ -295,7 +450,7 @@ export default function MyReposPage() {
               }}
             >
               <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-                {t('explore.selectFile')}
+                {multiSelectMode ? t('explore.noFilesSelected') : t('explore.selectFile')}
               </p>
             </div>
           )}
@@ -316,8 +471,8 @@ export default function MyReposPage() {
         </div>
       </div>
 
-      {/* Quiz Generate Modal */}
-      {selectedRepo && selectedFilePath && (
+      {/* Quiz Generate Modal - single file */}
+      {selectedRepo && selectedFilePath && multiFiles.length === 0 && (
         <QuizGenerateModal
           open={quizModalOpen}
           onOpenChange={setQuizModalOpen}
@@ -325,6 +480,22 @@ export default function MyReposPage() {
           language={detectLanguageFromPath(selectedFilePath)}
           sourceRepo={selectedRepo.full_name}
           sourceFile={selectedFilePath}
+        />
+      )}
+
+      {/* Quiz Generate Modal - multi file */}
+      {selectedRepo && multiFiles.length > 0 && (
+        <QuizGenerateModal
+          open={quizModalOpen}
+          onOpenChange={(open) => {
+            setQuizModalOpen(open)
+            if (!open) setMultiFiles([])
+          }}
+          code=""
+          language=""
+          sourceRepo={selectedRepo.full_name}
+          sourceFile=""
+          files={multiFiles}
         />
       )}
     </motion.div>

@@ -59,10 +59,13 @@ export async function fetchTrendingRepos(
     .toISOString()
     .split('T')[0]
 
-  let query = `stars:>100+created:>${weekAgo}`
+  // Use pushed:> to find recently active repos (not created:>)
+  let query = `stars:>50 pushed:>${weekAgo}`
+
+  // Multiple languages use OR logic (a repo can only be one language)
   if (languages.length > 0) {
-    const langFilter = languages.map((l) => `language:${l}`).join('+')
-    query += `+${langFilter}`
+    const langFilter = languages.map((l) => `language:${l}`).join(' OR ')
+    query += ` (${langFilter})`
   }
 
   const data = await ghFetch<{ items: GitHubRepo[] }>(
@@ -121,5 +124,55 @@ export async function fetchFileContent(
     `/repos/${owner}/${repo}/contents/${path}`,
     pat,
   )
-  return atob(data.content.replace(/\n/g, ''))
+  // Decode base64 → UTF-8 (atob alone breaks multi-byte chars like Korean)
+  const binary = atob(data.content.replace(/\n/g, ''))
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return new TextDecoder('utf-8').decode(bytes)
+}
+
+/** Max file size to fetch (100 KB) */
+const MAX_FILE_SIZE = 100_000
+
+/** Concurrent fetch limit */
+const MAX_CONCURRENT = 5
+
+/**
+ * Fetch multiple files in parallel with concurrency limit.
+ * Skips files larger than 100 KB.
+ */
+export async function fetchMultipleFiles(
+  owner: string,
+  repo: string,
+  paths: string[],
+  pat?: string,
+  treeSizeMap?: Map<string, number>,
+): Promise<Array<{ path: string; content: string }>> {
+  // Filter out files that are too large based on the tree size info
+  const filteredPaths = treeSizeMap
+    ? paths.filter((p) => {
+        const size = treeSizeMap.get(p)
+        return size === undefined || size <= MAX_FILE_SIZE
+      })
+    : paths
+
+  const results: Array<{ path: string; content: string }> = []
+  // Process in batches of MAX_CONCURRENT
+  for (let i = 0; i < filteredPaths.length; i += MAX_CONCURRENT) {
+    const batch = filteredPaths.slice(i, i + MAX_CONCURRENT)
+    const batchResults = await Promise.allSettled(
+      batch.map(async (path) => {
+        const content = await fetchFileContent(owner, repo, path, pat)
+        return { path, content }
+      }),
+    )
+    for (const result of batchResults) {
+      if (result.status === 'fulfilled') {
+        results.push(result.value)
+      }
+    }
+  }
+  return results
 }

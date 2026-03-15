@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
@@ -29,6 +29,25 @@ function useDifficulties() {
   ]
 }
 
+const MAX_COMBINED_LINES = 500
+const MAX_COMBINED_CHARS = 15000
+
+function detectLanguageFromPath(filePath: string): string {
+  const ext = filePath.split('.').pop()?.toLowerCase() ?? ''
+  const langMap: Record<string, string> = {
+    js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript',
+    py: 'python', rb: 'ruby', go: 'go', rs: 'rust', java: 'java',
+    kt: 'kotlin', swift: 'swift', c: 'c', h: 'c', cpp: 'cpp', cc: 'cpp',
+    cs: 'csharp', php: 'php',
+  }
+  return langMap[ext] ?? ext
+}
+
+export interface MultiFileEntry {
+  path: string
+  content: string
+}
+
 interface QuizGenerateModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -36,6 +55,8 @@ interface QuizGenerateModalProps {
   language: string
   sourceRepo: string
   sourceFile: string
+  /** When provided, generates from multiple files instead of single file */
+  files?: MultiFileEntry[]
 }
 
 export default function QuizGenerateModal({
@@ -45,6 +66,7 @@ export default function QuizGenerateModal({
   language,
   sourceRepo,
   sourceFile,
+  files,
 }: QuizGenerateModalProps) {
   const navigate = useNavigate()
   const setCurrentQuiz = useQuizStore((s) => s.setCurrentQuiz)
@@ -58,7 +80,70 @@ export default function QuizGenerateModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const lineCount = code.split('\n').length
+  const isMultiFile = files && files.length > 0
+
+  // Combine multiple files into a single code string with headers
+  const { combinedCode, primaryLanguage, totalLines } = useMemo(() => {
+    if (!isMultiFile) {
+      return {
+        combinedCode: code,
+        primaryLanguage: language,
+        totalLines: code.split('\n').length,
+      }
+    }
+
+    // Detect primary language from most common extension
+    const langCounts = new Map<string, number>()
+    for (const file of files) {
+      const lang = detectLanguageFromPath(file.path)
+      langCounts.set(lang, (langCounts.get(lang) ?? 0) + 1)
+    }
+    let detectedLang = language
+    let maxCount = 0
+    for (const [lang, count] of langCounts) {
+      if (count > maxCount) {
+        maxCount = count
+        detectedLang = lang
+      }
+    }
+
+    // Combine with file path headers, respecting limits
+    let combined = ''
+    let lineCount = 0
+    for (const file of files) {
+      const header = `// --- ${file.path} ---\n`
+      const content = file.content + '\n\n'
+      const headerLines = 1
+      const contentLines = file.content.split('\n').length + 1
+
+      if (lineCount + headerLines + contentLines > MAX_COMBINED_LINES) {
+        // Truncate this file's content to fit
+        const remainingLines = MAX_COMBINED_LINES - lineCount - headerLines
+        if (remainingLines > 5) {
+          combined += header
+          combined += file.content.split('\n').slice(0, remainingLines).join('\n') + '\n\n'
+          lineCount += headerLines + remainingLines
+        }
+        break
+      }
+
+      combined += header + content
+      lineCount += headerLines + contentLines
+
+      if (combined.length > MAX_COMBINED_CHARS) {
+        combined = combined.slice(0, MAX_COMBINED_CHARS)
+        break
+      }
+    }
+
+    return {
+      combinedCode: combined,
+      primaryLanguage: detectedLang,
+      totalLines: lineCount,
+    }
+  }, [isMultiFile, files, code, language])
+
+  const lineCount = isMultiFile ? totalLines : code.split('\n').length
 
   async function handleGenerate() {
     setLoading(true)
@@ -66,12 +151,12 @@ export default function QuizGenerateModal({
     setIsGenerating(true)
     try {
       const quiz = await generateQuiz(
-        code,
-        language,
+        combinedCode,
+        primaryLanguage,
         selectedType,
         selectedDifficulty,
         sourceRepo,
-        sourceFile,
+        isMultiFile ? files.map((f) => f.path).join(', ') : sourceFile,
       )
       setCurrentQuiz(quiz)
       onOpenChange(false)
@@ -205,7 +290,12 @@ export default function QuizGenerateModal({
 
           {/* Code info */}
           <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
-            {t('quizModal.linesOfCode', { lines: lineCount, language, file: sourceFile })}
+            {isMultiFile
+              ? t('quizModal.multiFileInfo', {
+                  count: files.length,
+                  lines: lineCount,
+                })
+              : t('quizModal.linesOfCode', { lines: lineCount, language: primaryLanguage, file: sourceFile })}
           </p>
 
           {/* Error */}
