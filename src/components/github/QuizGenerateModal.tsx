@@ -4,7 +4,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { useQuizStore } from '@/stores/useQuizStore'
-import { generateQuiz } from '@/services/quiz-generator'
+import { generateQuiz, generateMultipleQuizzes } from '@/services/quiz-generator'
 import { useTranslation } from '@/i18n'
 import type { QuizType, Difficulty } from '@/types'
 
@@ -31,6 +31,8 @@ function useDifficulties() {
 
 const MAX_COMBINED_LINES = 500
 const MAX_COMBINED_CHARS = 15000
+
+const QUESTION_COUNT_OPTIONS = [1, 3, 5, 10] as const
 
 function detectLanguageFromPath(filePath: string): string {
   const ext = filePath.split('.').pop()?.toLowerCase() ?? ''
@@ -70,6 +72,7 @@ export default function QuizGenerateModal({
 }: QuizGenerateModalProps) {
   const navigate = useNavigate()
   const setCurrentQuiz = useQuizStore((s) => s.setCurrentQuiz)
+  const setQuizSeries = useQuizStore((s) => s.setQuizSeries)
   const setIsGenerating = useQuizStore((s) => s.setIsGenerating)
   const { t } = useTranslation()
   const QUIZ_TYPES = useQuizTypes()
@@ -77,6 +80,7 @@ export default function QuizGenerateModal({
 
   const [selectedType, setSelectedType] = useState<QuizType>('explain')
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('intermediate')
+  const [questionCount, setQuestionCount] = useState<number>(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -150,17 +154,36 @@ export default function QuizGenerateModal({
     setError(null)
     setIsGenerating(true)
     try {
-      const quiz = await generateQuiz(
-        combinedCode,
-        primaryLanguage,
-        selectedType,
-        selectedDifficulty,
-        sourceRepo,
-        isMultiFile ? files.map((f) => f.path).join(', ') : sourceFile,
-      )
-      setCurrentQuiz(quiz)
-      onOpenChange(false)
-      navigate(`/quiz/${quiz.id}`)
+      const resolvedSourceFile = isMultiFile
+        ? files.map((f) => f.path).join(', ')
+        : sourceFile
+
+      if (questionCount > 1) {
+        const quizzes = await generateMultipleQuizzes(
+          combinedCode,
+          primaryLanguage,
+          selectedType,
+          selectedDifficulty,
+          sourceRepo,
+          resolvedSourceFile,
+          questionCount,
+        )
+        setQuizSeries(quizzes)
+        onOpenChange(false)
+        navigate(`/quiz/${quizzes[0].id}`)
+      } else {
+        const quiz = await generateQuiz(
+          combinedCode,
+          primaryLanguage,
+          selectedType,
+          selectedDifficulty,
+          sourceRepo,
+          resolvedSourceFile,
+        )
+        setCurrentQuiz(quiz)
+        onOpenChange(false)
+        navigate(`/quiz/${quiz.id}`)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate quiz')
     } finally {
@@ -283,6 +306,36 @@ export default function QuizGenerateModal({
                   }}
                 >
                   {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Question Count */}
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-sub)', marginBottom: 8, display: 'block' }}>
+              {t('quiz.questionCount')}
+            </label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {QUESTION_COUNT_OPTIONS.map((count) => (
+                <button
+                  key={count}
+                  onClick={() => setQuestionCount(count)}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: 10,
+                    border: `2px solid ${questionCount === count ? 'var(--primary)' : 'var(--border)'}`,
+                    backgroundColor:
+                      questionCount === count ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                    color: 'var(--text)',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {count}
                 </button>
               ))}
             </div>

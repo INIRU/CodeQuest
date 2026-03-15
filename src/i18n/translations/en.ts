@@ -88,6 +88,12 @@ const en = {
     fixBugHint: 'Edit the code above to fix the bug(s).',
     reviewPlaceholder: 'List the improvements you would make...',
     outputPlaceholder: 'What will this code output?',
+    questionCount: 'Number of Questions',
+    questionProgress: 'Question {current} / {total}',
+    nextQuestion: 'Next Question',
+    prevQuestion: 'Previous Question',
+    seriesComplete: 'Series Complete!',
+    averageScore: 'Average Score',
   },
   // Quiz Generate Modal
   quizModal: {
@@ -167,6 +173,12 @@ const en = {
     syncNoToken: 'Set up your GitHub token first to enable sync.',
     syncGistId: 'Gist ID',
     syncNoData: 'No sync data found. Save first.',
+    syncGistForbidden: 'Your GitHub token needs the "gist" scope. Create a new token with gist permissions.',
+  },
+  // My Repos
+  myReposPage: {
+    searchPlaceholder: 'Search repositories...',
+    noResults: 'No repositories match your search.',
   },
   // Common
   common: {

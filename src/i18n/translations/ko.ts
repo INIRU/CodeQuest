@@ -83,6 +83,12 @@ const ko = {
     fixBugHint: '위 코드를 수정하여 버그를 고치세요.',
     reviewPlaceholder: '개선할 점을 작성하세요...',
     outputPlaceholder: '이 코드의 출력 결과는?',
+    questionCount: '문제 수',
+    questionProgress: '문제 {current} / {total}',
+    nextQuestion: '다음 문제',
+    prevQuestion: '이전 문제',
+    seriesComplete: '시리즈 완료!',
+    averageScore: '평균 점수',
   },
   quizModal: {
     title: '문제 생성',
@@ -159,6 +165,11 @@ const ko = {
     syncNoToken: 'GitHub 토큰을 먼저 설정하세요.',
     syncGistId: 'Gist ID',
     syncNoData: '동기화 데이터가 없습니다. 먼저 저장하세요.',
+    syncGistForbidden: 'GitHub 토큰에 "gist" 권한이 필요합니다. gist 권한이 있는 새 토큰을 생성하세요.',
+  },
+  myReposPage: {
+    searchPlaceholder: '레포지토리 검색...',
+    noResults: '검색 결과가 없습니다.',
   },
   common: {
     back: '뒤로',

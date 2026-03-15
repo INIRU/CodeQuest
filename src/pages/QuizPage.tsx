@@ -1,7 +1,7 @@
-import { type JSX, useCallback } from 'react'
+import { type JSX, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { FileCode, BookOpen, Code, Bug, Search, Terminal } from 'lucide-react'
+import { FileCode, BookOpen, Code, Bug, Search, Terminal, ChevronLeft, ChevronRight, Trophy } from 'lucide-react'
 import { Button, Card, Badge } from '@/components/ui'
 import HintPanel from '@/components/quiz/HintPanel'
 import GradingResultView from '@/components/quiz/GradingResult'
@@ -126,6 +126,31 @@ export default function QuizPage() {
   const { t } = useTranslation()
   const quizTypeLabels = useQuizTypeLabels()
 
+  // Series state
+  const quizSeries = useQuizStore((s) => s.quizSeries)
+  const currentIndex = useQuizStore((s) => s.currentIndex)
+  const seriesGradingResults = useQuizStore((s) => s.seriesGradingResults)
+  const nextQuiz = useQuizStore((s) => s.nextQuiz)
+  const prevQuiz = useQuizStore((s) => s.prevQuiz)
+  const goToQuiz = useQuizStore((s) => s.goToQuiz)
+
+  const isSeries = quizSeries.length > 1
+  const isLastInSeries = isSeries && currentIndex === quizSeries.length - 1
+  const isFirstInSeries = isSeries && currentIndex === 0
+
+  // Check if all quizzes in the series have been graded
+  const allSeriesGraded = useMemo(() => {
+    if (!isSeries) return false
+    return seriesGradingResults.every((r) => r !== null)
+  }, [isSeries, seriesGradingResults])
+
+  // Calculate average score for completed series
+  const averageScore = useMemo(() => {
+    if (!allSeriesGraded) return 0
+    const scores = seriesGradingResults.map((r) => r?.score ?? 0)
+    return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+  }, [allSeriesGraded, seriesGradingResults])
+
   const handleSubmit = useCallback(async () => {
     if (!currentQuiz || !userAnswer.trim() || isGrading) return
 
@@ -227,6 +252,62 @@ export default function QuizPage() {
       transition={{ duration: 0.3 }}
       style={{ padding: 32, maxWidth: 1200, margin: '0 auto' }}
     >
+      {/* Series progress indicator */}
+      {isSeries && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 12,
+            marginBottom: 24,
+          }}
+        >
+          {/* Progress text */}
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: 'var(--text-sub)',
+            }}
+          >
+            {t('quiz.questionProgress', {
+              current: currentIndex + 1,
+              total: quizSeries.length,
+            })}
+          </div>
+
+          {/* Dot indicators */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {quizSeries.map((_, idx) => {
+              const isCompleted = seriesGradingResults[idx] !== null
+              const isCurrent = idx === currentIndex
+              return (
+                <button
+                  key={idx}
+                  onClick={() => goToQuiz(idx)}
+                  style={{
+                    width: isCurrent ? 28 : 12,
+                    height: 12,
+                    borderRadius: 6,
+                    border: '2px solid var(--primary)',
+                    backgroundColor: isCompleted
+                      ? 'var(--primary)'
+                      : isCurrent
+                        ? 'rgba(99, 102, 241, 0.3)'
+                        : 'transparent',
+                    cursor: 'pointer',
+                    padding: 0,
+                    transition: 'all 0.2s',
+                  }}
+                  aria-label={`Question ${idx + 1}`}
+                />
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 24 }}>
         {/* Left panel */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -306,6 +387,168 @@ export default function QuizPage() {
               hintsUsed={hintsUsed}
               finalScore={finalScore}
             />
+          )}
+
+          {/* Series navigation buttons */}
+          {isSeries && isSubmitted && (
+            <div
+              style={{
+                display: 'flex',
+                gap: 12,
+                justifyContent: 'center',
+                marginTop: 8,
+              }}
+            >
+              {!isFirstInSeries && (
+                <Button
+                  variant="secondary"
+                  onClick={prevQuiz}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <ChevronLeft size={16} />
+                  {t('quiz.prevQuestion')}
+                </Button>
+              )}
+              {!isLastInSeries && (
+                <Button
+                  variant="primary"
+                  onClick={nextQuiz}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  {t('quiz.nextQuestion')}
+                  <ChevronRight size={16} />
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Series complete summary */}
+          {isSeries && allSeriesGraded && isLastInSeries && (
+            <Card
+              style={{
+                marginTop: 12,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 16,
+                padding: 28,
+                border: '2px solid var(--primary)',
+                background: 'rgba(99, 102, 241, 0.05)',
+              }}
+            >
+              <Trophy size={40} style={{ color: 'var(--primary)' }} />
+              <h2
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: 'var(--text)',
+                  margin: 0,
+                }}
+              >
+                {t('quiz.seriesComplete')}
+              </h2>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 14,
+                    color: 'var(--text-sub)',
+                  }}
+                >
+                  {t('quiz.averageScore')}
+                </span>
+                <span
+                  style={{
+                    fontSize: 36,
+                    fontWeight: 800,
+                    color:
+                      averageScore >= 80
+                        ? 'var(--success, #22c55e)'
+                        : averageScore >= 50
+                          ? 'var(--warning, #eab308)'
+                          : 'var(--error, #ef4444)',
+                  }}
+                >
+                  {averageScore}
+                </span>
+              </div>
+
+              {/* Individual scores */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 8,
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                }}
+              >
+                {seriesGradingResults.map((result, idx) => {
+                  const score = result?.score ?? 0
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => goToQuiz(idx)}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 2,
+                        padding: '8px 12px',
+                        borderRadius: 8,
+                        border: `1px solid ${idx === currentIndex ? 'var(--primary)' : 'var(--border)'}`,
+                        backgroundColor:
+                          idx === currentIndex
+                            ? 'rgba(99, 102, 241, 0.1)'
+                            : 'transparent',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: 'var(--text-muted)',
+                        }}
+                      >
+                        Q{idx + 1}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color:
+                            score >= 80
+                              ? 'var(--success, #22c55e)'
+                              : score >= 50
+                                ? 'var(--warning, #eab308)'
+                                : 'var(--error, #ef4444)',
+                        }}
+                      >
+                        {score}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <Button onClick={() => navigate('/explore')} style={{ marginTop: 8 }}>
+                {t('quiz.exploreBtn')}
+              </Button>
+            </Card>
           )}
         </div>
 
