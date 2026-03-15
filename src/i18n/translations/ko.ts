@@ -24,6 +24,12 @@ const ko = {
     continueDesc: '아직 끝나지 않은 퀴즈가 있습니다',
     discard: '포기',
     seriesProgress: '문제 {current} / {total}',
+    quickQuiz: '빠른 퀴즈',
+    quickQuizDesc: 'GitHub 없이 문제 생성 — AI가 코드를 직접 만들어줍니다',
+    topic: '주제 (선택사항)',
+    topicPlaceholder: '예: 배열, 재귀, 비동기...',
+    selectLanguage: '언어',
+    generateQuiz: '문제 생성',
   },
   explore: {
     title: '탐색',

@@ -5,6 +5,7 @@ import { Button, Card } from '@/components/ui'
 import { useHistoryStore } from '@/stores/useHistoryStore'
 import { useQuizStore } from '@/stores/useQuizStore'
 import { useTranslation } from '@/i18n'
+import QuickQuizCard from '@/components/dashboard/QuickQuizCard'
 
 function getScoreColor(score: number): string {
   if (score >= 80) return 'var(--success)'
@@ -106,6 +107,9 @@ export default function DashboardPage() {
             </div>
           </Card>
         )}
+        <div style={{ maxWidth: 400, width: '100%' }}>
+          <QuickQuizCard />
+        </div>
         <Card
           style={{
             textAlign: 'center',
@@ -246,6 +250,9 @@ export default function DashboardPage() {
           </div>
         </Card>
       )}
+
+      {/* Quick Quiz */}
+      <QuickQuizCard />
 
       {/* Stats row */}
       <div

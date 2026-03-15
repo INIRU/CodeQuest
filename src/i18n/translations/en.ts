@@ -26,6 +26,12 @@ const en = {
     continueDesc: 'You have an unfinished quiz',
     discard: 'Discard',
     seriesProgress: 'Question {current} / {total}',
+    quickQuiz: 'Quick Quiz',
+    quickQuizDesc: 'Generate a quiz without GitHub — AI creates the code for you',
+    topic: 'Topic (optional)',
+    topicPlaceholder: 'e.g., arrays, recursion, async/await...',
+    selectLanguage: 'Language',
+    generateQuiz: 'Generate Quiz',
   },
   // Explore
   explore: {

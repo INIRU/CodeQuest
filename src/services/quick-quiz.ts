@@ -1,10 +1,7 @@
-import type { Quiz, QuizType, Difficulty, GradingResult } from '@/types'
+import type { Quiz, QuizType, Difficulty } from '@/types'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { callAI } from './ai'
 import type { Message } from './ai'
-
-const MAX_LINES = 500
-const MAX_CHARS = 15_000
 
 const SCHEMA_HINTS: Record<QuizType, string> = {
   explain: JSON.stringify(
@@ -100,19 +97,10 @@ const SCHEMA_HINTS: Record<QuizType, string> = {
   ),
 }
 
-function truncateCode(code: string): string {
-  const lines = code.split('\n')
-  const truncatedLines = lines.slice(0, MAX_LINES)
-  const joined = truncatedLines.join('\n')
-  return joined.length > MAX_CHARS ? joined.slice(0, MAX_CHARS) : joined
-}
-
 function extractJson(text: string): string {
-  // Try to find JSON in markdown code block
   const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
   if (codeBlockMatch) return codeBlockMatch[1].trim()
 
-  // Try to find first { to last }
   const start = text.indexOf('{')
   const end = text.lastIndexOf('}')
   if (start !== -1 && end > start) return text.slice(start, end + 1)
@@ -131,71 +119,10 @@ function extractJsonFromResponse(text: string): unknown {
   }
 }
 
-/**
- * Generate a quiz from source code using the active AI preset.
- */
-export async function generateQuiz(
-  code: string,
-  language: string,
-  quizType: QuizType,
-  difficulty: Difficulty,
-  sourceRepo: string,
-  sourceFile: string,
-): Promise<Quiz> {
-  const { presets, activePresetKey, language: uiLang } = useSettingsStore.getState()
-  const preset = presets[activePresetKey]
-  if (!preset) {
-    throw new Error(`No AI preset found for key "${activePresetKey}"`)
-  }
-
-  const truncatedCode = truncateCode(code)
-  const schemaHint = SCHEMA_HINTS[quizType]
-  const langInstruction = uiLang === 'ko'
-    ? 'All text fields (question, hints, explanation, feedback) MUST be written in Korean.'
-    : 'All text fields (question, hints, explanation, feedback) MUST be written in English.'
-
-  const systemMessage: Message = {
-    role: 'system',
-    content: `You are a coding quiz generator. You MUST respond with ONLY a valid JSON object. Do NOT include any text before or after the JSON. Do NOT wrap it in markdown code blocks.
-
-${langInstruction}
-
-Generate a ${quizType} quiz at ${difficulty} difficulty level for ${language} code.
-If the code is long, focus on the most important or interesting part. Do not try to cover everything in a single question.
-
-The JSON must match this exact schema:
-${schemaHint}`,
-  }
-
-  const userMessage: Message = {
-    role: 'user',
-    content: `Generate a ${quizType} quiz (${difficulty} difficulty) for the following ${language} code:
-
-\`\`\`${language}
-${truncatedCode}
-\`\`\`
-
-Respond with only the JSON quiz object. ${uiLang === 'ko' ? 'All text must be in Korean.' : ''}`,
-  }
-
-  const { text } = await callAI(preset, [systemMessage, userMessage])
-  const parsed = extractJsonFromResponse(text) as Record<string, unknown>
-
-  return {
-    ...parsed,
-    id: crypto.randomUUID(),
-    language,
-    sourceRepo,
-    sourceFile,
-  } as Quiz
-}
-
 function extractJsonArrayFromResponse(text: string): unknown[] {
-  // Try to find JSON array in markdown code block
   const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
   const raw = codeBlockMatch ? codeBlockMatch[1].trim() : text.trim()
 
-  // Try to find first [ to last ]
   const startBracket = raw.indexOf('[')
   const endBracket = raw.lastIndexOf(']')
   if (startBracket !== -1 && endBracket > startBracket) {
@@ -208,11 +135,9 @@ function extractJsonArrayFromResponse(text: string): unknown[] {
     }
   }
 
-  // Fallback: try parsing the entire text as JSON
   try {
     const parsed = JSON.parse(raw)
     if (Array.isArray(parsed)) return parsed
-    // If it's a single object, wrap it
     return [parsed]
   } catch (err) {
     throw new Error(
@@ -222,20 +147,68 @@ function extractJsonArrayFromResponse(text: string): unknown[] {
 }
 
 /**
- * Generate multiple quizzes from source code using the active AI preset.
- * Each quiz focuses on a different part/aspect of the code.
+ * Generate a quick quiz without GitHub code — AI creates the code snippet.
  */
-export async function generateMultipleQuizzes(
-  code: string,
+export async function generateQuickQuiz(
   language: string,
   quizType: QuizType,
   difficulty: Difficulty,
-  sourceRepo: string,
-  sourceFile: string,
+  topic?: string,
+): Promise<Quiz> {
+  const { presets, activePresetKey, language: uiLang } = useSettingsStore.getState()
+  const preset = presets[activePresetKey]
+  if (!preset) {
+    throw new Error(`No AI preset found for key "${activePresetKey}"`)
+  }
+
+  const schemaHint = SCHEMA_HINTS[quizType]
+  const langInstruction = uiLang === 'ko'
+    ? 'All text fields (question, hints, explanation, feedback) MUST be written in Korean.'
+    : 'All text fields (question, hints, explanation, feedback) MUST be written in English.'
+
+  const topicDesc = topic ? topic : 'a common programming concept'
+
+  const systemMessage: Message = {
+    role: 'system',
+    content: `You are a coding quiz generator. Create a ${language} code snippet about ${topicDesc} and generate a ${quizType} quiz from it.
+${langInstruction}
+Difficulty: ${difficulty}
+You MUST respond with ONLY a valid JSON object matching this schema:
+${schemaHint}
+The "code" field should contain the code snippet you created.`,
+  }
+
+  const userMessage: Message = {
+    role: 'user',
+    content: `Create a ${language} code snippet about ${topicDesc} and generate a ${quizType} quiz (${difficulty} difficulty) from it.
+
+Respond with only the JSON quiz object. ${uiLang === 'ko' ? 'All text must be in Korean.' : ''}`,
+  }
+
+  const { text } = await callAI(preset, [systemMessage, userMessage])
+  const parsed = extractJsonFromResponse(text) as Record<string, unknown>
+
+  return {
+    ...parsed,
+    id: crypto.randomUUID(),
+    language,
+    sourceRepo: 'AI Generated',
+    sourceFile: topic ? `${language}/${topic}` : language,
+  } as Quiz
+}
+
+/**
+ * Generate multiple quick quizzes without GitHub code.
+ */
+export async function generateQuickMultipleQuizzes(
+  language: string,
+  quizType: QuizType,
+  difficulty: Difficulty,
   count: number,
+  topic?: string,
 ): Promise<Quiz[]> {
   if (count <= 1) {
-    const quiz = await generateQuiz(code, language, quizType, difficulty, sourceRepo, sourceFile)
+    const quiz = await generateQuickQuiz(language, quizType, difficulty, topic)
     return [quiz]
   }
 
@@ -245,32 +218,27 @@ export async function generateMultipleQuizzes(
     throw new Error(`No AI preset found for key "${activePresetKey}"`)
   }
 
-  const truncatedCode = truncateCode(code)
   const schemaHint = SCHEMA_HINTS[quizType]
   const langInstruction = uiLang === 'ko'
     ? 'All text fields (question, hints, explanation, feedback) MUST be written in Korean.'
     : 'All text fields (question, hints, explanation, feedback) MUST be written in English.'
 
+  const topicDesc = topic ? topic : 'common programming concepts'
+
   const systemMessage: Message = {
     role: 'system',
-    content: `You are a coding quiz generator. You MUST respond with ONLY a valid JSON array. Do NOT include any text before or after the JSON. Do NOT wrap it in markdown code blocks.
-
+    content: `You are a coding quiz generator. Create ${count} different ${language} code snippets about ${topicDesc} and generate a ${quizType} quiz from each.
 ${langInstruction}
-
-Generate ${count} separate ${quizType} quiz questions at ${difficulty} difficulty level for ${language} code. Each question should focus on a different part or aspect of the code.
-Distribute questions across different sections of the code. Each question should cover a different function, class, or logic block. If the code is long, this helps the user learn each part step by step.
-
-Return a JSON array of ${count} quiz objects. Each object must match this exact schema:
-${schemaHint}`,
+Difficulty: ${difficulty}
+Each question should use a different code snippet and cover a different aspect of the topic.
+You MUST respond with ONLY a valid JSON array of ${count} quiz objects. Each object must match this schema:
+${schemaHint}
+The "code" field in each object should contain the code snippet you created for that question.`,
   }
 
   const userMessage: Message = {
     role: 'user',
-    content: `Generate ${count} separate ${quizType} quiz questions (${difficulty} difficulty) for the following ${language} code. Each question should focus on a different part or aspect of the code.
-
-\`\`\`${language}
-${truncatedCode}
-\`\`\`
+    content: `Create ${count} different ${language} code snippets about ${topicDesc} and generate ${count} separate ${quizType} quiz questions (${difficulty} difficulty). Each should cover a different aspect.
 
 Respond with only a JSON array of ${count} quiz objects. ${uiLang === 'ko' ? 'All text must be in Korean.' : ''}`,
   }
@@ -282,76 +250,7 @@ Respond with only a JSON array of ${count} quiz objects. ${uiLang === 'ko' ? 'Al
     ...(parsed as Record<string, unknown>),
     id: crypto.randomUUID(),
     language,
-    sourceRepo,
-    sourceFile,
+    sourceRepo: 'AI Generated',
+    sourceFile: topic ? `${language}/${topic}` : language,
   })) as Quiz[]
-}
-
-/**
- * Grade a quiz answer using AI.
- */
-export async function gradeQuiz(
-  quiz: Quiz,
-  userAnswer: string,
-): Promise<GradingResult> {
-  const { presets, activePresetKey, language: uiLang } = useSettingsStore.getState()
-  const preset = presets[activePresetKey]
-  if (!preset) {
-    throw new Error(`No AI preset found for key "${activePresetKey}"`)
-  }
-
-  const gradeLangInstruction = uiLang === 'ko'
-    ? 'All feedback, comments, and correctAnswer MUST be written in Korean.'
-    : 'All feedback, comments, and correctAnswer MUST be written in English.'
-
-  const systemMessage: Message = {
-    role: 'system',
-    content: `You are a coding quiz grader. Grade the user's answer to a ${quiz.type} quiz.
-
-${gradeLangInstruction}
-
-You MUST respond with ONLY a valid JSON object matching this schema:
-{
-  "score": <number 0-100>,
-  "feedback": "<overall feedback string>",
-  "details": [{"point": "<criterion>", "correct": <boolean>, "comment": "<explanation>"}],
-  "correctAnswer": "<the correct answer as a string>"
-}
-
-Do not include any explanation outside the JSON.`,
-  }
-
-  const userMessage: Message = {
-    role: 'user',
-    content: `Quiz type: ${quiz.type}
-Difficulty: ${quiz.difficulty}
-Language: ${quiz.language}
-
-Question: ${quiz.question}
-
-Code:
-\`\`\`${quiz.language}
-${quiz.code}
-\`\`\`
-
-Expected answer: ${JSON.stringify(quiz.answer)}
-
-User's answer:
-${userAnswer}
-
-Grade the answer and respond with only the JSON grading result.`,
-  }
-
-  const { text } = await callAI(preset, [systemMessage, userMessage])
-  return extractJsonFromResponse(text) as GradingResult
-}
-
-/**
- * Calculate final score with hint penalties.
- * 0 hints = 1.0x, 1 hint = 0.8x, 2 hints = 0.5x
- */
-export function calculateFinalScore(rawScore: number, hintsUsed: number): number {
-  const penalties: Record<number, number> = { 0: 1.0, 1: 0.8, 2: 0.5 }
-  const penalty = penalties[hintsUsed] ?? 0.5
-  return Math.round(rawScore * penalty)
 }
