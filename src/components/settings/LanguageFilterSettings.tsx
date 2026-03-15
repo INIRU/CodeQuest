@@ -37,7 +37,7 @@ export default function LanguageFilterSettings() {
         {t('settings.languageFilter')}
       </h2>
       <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
-        Select languages to filter repositories in Explore. Leave empty to show all.
+        {t('settings.languageFilterHint')}
       </p>
       <div
         style={{

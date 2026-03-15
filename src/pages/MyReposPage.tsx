@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { RefreshCw, ArrowLeft, Lock, CheckSquare, Square, Sparkles, Loader } from 'lucide-react'
+import { RefreshCw, ArrowLeft, Lock, CheckSquare, Square, Sparkles, Loader, Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Skeleton, ErrorCard, Card } from '@/components/ui'
 import { useSettingsStore } from '@/stores/useSettingsStore'
@@ -56,6 +56,18 @@ export default function MyReposPage() {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
   const [multiFiles, setMultiFiles] = useState<MultiFileEntry[]>([])
   const [multiFetchLoading, setMultiFetchLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredRepos = useMemo(() => {
+    if (!searchQuery.trim()) return myRepos
+    const q = searchQuery.toLowerCase()
+    return myRepos.filter((r) =>
+      r.full_name.toLowerCase().includes(q) ||
+      r.name.toLowerCase().includes(q) ||
+      (r.description?.toLowerCase().includes(q) ?? false) ||
+      (r.language?.toLowerCase().includes(q) ?? false)
+    )
+  }, [myRepos, searchQuery])
 
   // Get all code file paths for the current tree
   const allCodeFilePaths = useMemo(() => {
@@ -318,12 +330,34 @@ export default function MyReposPage() {
                 </div>
               )}
               {error && <ErrorCard message={error} onRetry={doFetch} />}
-              {!loading && !error && myRepos.map((repo) => (
+              {!loading && !error && !selectedRepo && (
+                <div style={{ position: 'relative', marginBottom: 8 }}>
+                  <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t('myReposPage.searchPlaceholder')}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px 8px 30px',
+                      fontSize: 13,
+                      borderRadius: 8,
+                      border: '1px solid var(--border)',
+                      backgroundColor: 'var(--surface)',
+                      color: 'var(--text)',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              )}
+              {!loading && !error && filteredRepos.map((repo) => (
                 <RepoCard key={repo.id} repo={repo} onClick={handleSelectRepo} />
               ))}
-              {!loading && !error && myRepos.length === 0 && (
+              {!loading && !error && filteredRepos.length === 0 && myRepos.length > 0 && (
                 <p style={{ fontSize: 14, color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>
-                  No repositories found.
+                  {t('myReposPage.noResults')}
                 </p>
               )}
             </>

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import AISettings from '@/components/settings/AISettings'
 import GitHubSettings from '@/components/settings/GitHubSettings'
+import SyncSettings from '@/components/settings/SyncSettings'
 import LanguageFilterSettings from '@/components/settings/LanguageFilterSettings'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { useTranslation } from '@/i18n'
@@ -76,6 +77,10 @@ export default function SettingsPage() {
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: 0 }} />
 
       <GitHubSettings />
+
+      <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: 0 }} />
+
+      <SyncSettings />
 
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: 0 }} />
 

@@ -9,6 +9,8 @@ interface SettingsState {
   githubPat: string
   activePresetKey: string
   presets: Record<string, AIPreset>
+  corsProxyUrl: string
+  syncGistId: string
 
   setTheme: (theme: 'dark' | 'light') => void
   toggleTheme: () => void
@@ -19,6 +21,8 @@ interface SettingsState {
   updatePreset: (key: string, preset: Partial<AIPreset>) => void
   addPreset: (key: string, preset: AIPreset) => void
   deletePreset: (key: string) => void
+  setCorsProxyUrl: (url: string) => void
+  setSyncGistId: (id: string) => void
 }
 
 const defaultPresets: Record<string, AIPreset> = {
@@ -89,6 +93,10 @@ export const useSettingsStore = create<SettingsState>()(
           presets: { ...state.presets, [key]: preset },
           activePresetKey: key,
         })),
+      corsProxyUrl: '',
+      syncGistId: '',
+      setCorsProxyUrl: (url) => set({ corsProxyUrl: url }),
+      setSyncGistId: (id) => set({ syncGistId: id }),
       deletePreset: (key) =>
         set((state) => {
           const { [key]: _, ...rest } = state.presets
@@ -100,12 +108,19 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'codetraining-settings',
-      version: 2,
+      version: 4,
       migrate: (persisted: unknown, version: number) => {
+        const state = persisted as Record<string, unknown>
         if (version < 2) {
-          return { ...(persisted as Record<string, unknown>), presets: defaultPresets }
+          return { ...state, presets: defaultPresets, corsProxyUrl: '', syncGistId: '' }
         }
-        return persisted as Record<string, unknown>
+        if (version < 3) {
+          return { ...state, corsProxyUrl: '', syncGistId: '' }
+        }
+        if (version < 4) {
+          return { ...state, syncGistId: '' }
+        }
+        return state
       },
     }
   )

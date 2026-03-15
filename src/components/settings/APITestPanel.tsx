@@ -39,9 +39,14 @@ export default function APITestPanel() {
     setDetectedPath(null)
     setParsedText(null)
 
+    const corsProxy = useSettingsStore.getState().corsProxyUrl
     const start = performance.now()
     try {
-      const response = await fetch(builtRequest.url, {
+      const targetUrl = corsProxy
+        ? `${corsProxy.replace(/\/+$/, '')}/${builtRequest.url}`
+        : builtRequest.url
+
+      const response = await fetch(targetUrl, {
         method: builtRequest.method,
         headers: builtRequest.headers,
         body: builtRequest.body,
@@ -73,11 +78,19 @@ export default function APITestPanel() {
       const elapsed = Math.round(performance.now() - start)
       setResponseTime(elapsed)
 
-      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      // Safari: "Load failed", Chrome: "Failed to fetch", Firefox: "NetworkError"
+      const isNetworkError = err instanceof TypeError && (
+        msg === 'Failed to fetch' ||
+        msg === 'Load failed' ||
+        msg.includes('NetworkError') ||
+        msg.includes('Network request failed')
+      )
+      if (isNetworkError) {
         setIsCorsError(true)
-        setError('Network error - likely blocked by CORS policy.')
+        setError(t('settings.corsError'))
       } else {
-        setError(err instanceof Error ? err.message : 'Unknown error')
+        setError(msg)
       }
     } finally {
       setLoading(false)
@@ -92,6 +105,11 @@ export default function APITestPanel() {
 
   return (
     <Card style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
+      {!preset.apiKey && preset.url.includes('{{KEY}}') && (
+        <p style={{ fontSize: 13, color: 'var(--warning)', margin: 0 }}>
+          {t('settings.apiKeyEmpty')}
+        </p>
+      )}
       <Button
         variant="primary"
         size="sm"
@@ -180,7 +198,7 @@ export default function APITestPanel() {
                 url: builtRequest.url,
                 method: builtRequest.method,
                 headers: builtRequest.headers,
-                body: JSON.parse(builtRequest.body),
+                body: (() => { try { return JSON.parse(builtRequest.body) } catch { return builtRequest.body } })(),
               },
               null,
               2,

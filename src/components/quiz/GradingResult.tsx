@@ -176,7 +176,9 @@ export default function GradingResultView({
                 fontSize: 13,
                 lineHeight: 1.6,
                 color: 'var(--text)',
-                fontFamily: 'monospace',
+                fontFamily: 'var(--font-mono)',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
               }}
             >
               <code>{result.correctAnswer}</code>

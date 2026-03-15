@@ -1,5 +1,6 @@
 import { Input } from '@/components/ui'
 import { useTranslation } from '@/i18n'
+import CodeBlock from './CodeBlock'
 import type { FillBlankQuiz } from '@/types'
 
 interface FillBlankQuizProps {
@@ -25,27 +26,12 @@ export default function FillBlankQuizView({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: '100%', overflow: 'hidden' }}>
       <p style={{ fontSize: 15, color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>
         {quiz.question}
       </p>
 
-      <pre
-        style={{
-          margin: 0,
-          padding: 16,
-          borderRadius: 10,
-          backgroundColor: 'var(--surface)',
-          border: '1px solid var(--border)',
-          overflow: 'auto',
-          fontSize: 13,
-          lineHeight: 1.6,
-          color: 'var(--text)',
-          fontFamily: 'monospace',
-        }}
-      >
-        <code>{quiz.code}</code>
-      </pre>
+      <CodeBlock code={quiz.code} language={quiz.language} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {blanks.map((blankValue, i) => (

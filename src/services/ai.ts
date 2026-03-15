@@ -1,4 +1,5 @@
 import type { AIPreset } from '@/types'
+import { useSettingsStore } from '@/stores/useSettingsStore'
 
 export interface Message {
   role: string
@@ -75,7 +76,7 @@ export function buildRequest(
 export async function callAI(
   preset: AIPreset,
   messages: Message[],
-  timeout = 30_000,
+  timeout = 600_000,
 ): Promise<{ raw: unknown; text: string }> {
   const request = buildRequest(preset, messages)
 
@@ -83,7 +84,13 @@ export async function callAI(
   const timer = setTimeout(() => controller.abort(), timeout)
 
   try {
-    const response = await fetch(request.url, {
+    // Apply CORS proxy if configured
+    const corsProxy = useSettingsStore.getState().corsProxyUrl
+    const targetUrl = corsProxy
+      ? `${corsProxy.replace(/\/+$/, '')}/${request.url}`
+      : request.url
+
+    const response = await fetch(targetUrl, {
       method: request.method,
       headers: request.headers,
       body: request.body,

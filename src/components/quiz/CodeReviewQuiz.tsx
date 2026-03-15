@@ -1,4 +1,5 @@
 import { useTranslation } from '@/i18n'
+import CodeBlock from './CodeBlock'
 import type { CodeReviewQuiz } from '@/types'
 
 interface CodeReviewQuizProps {
@@ -17,27 +18,12 @@ export default function CodeReviewQuizView({
   const { t } = useTranslation()
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: '100%', overflow: 'hidden' }}>
       <p style={{ fontSize: 15, color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>
         {quiz.question}
       </p>
 
-      <pre
-        style={{
-          margin: 0,
-          padding: 16,
-          borderRadius: 10,
-          backgroundColor: 'var(--surface)',
-          border: '1px solid var(--border)',
-          overflow: 'auto',
-          fontSize: 13,
-          lineHeight: 1.6,
-          color: 'var(--text)',
-          fontFamily: 'monospace',
-        }}
-      >
-        <code>{quiz.code}</code>
-      </pre>
+      <CodeBlock code={quiz.code} language={quiz.language} />
 
       <textarea
         value={value}

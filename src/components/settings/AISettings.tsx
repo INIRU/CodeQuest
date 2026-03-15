@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import {
-  AlertTriangle,
   Plus,
   Trash2,
   ChevronDown,
   ChevronUp,
   Key,
 } from 'lucide-react'
-import { Button, Card, Input, Select } from '@/components/ui'
+import { Button, Input, Select } from '@/components/ui'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { useTranslation } from '@/i18n'
 import APITestPanel from './APITestPanel'
@@ -21,6 +20,8 @@ export default function AISettings() {
   const updatePreset = useSettingsStore((s) => s.updatePreset)
   const addPreset = useSettingsStore((s) => s.addPreset)
   const deletePreset = useSettingsStore((s) => s.deletePreset)
+  const corsProxyUrl = useSettingsStore((s) => s.corsProxyUrl)
+  const setCorsProxyUrl = useSettingsStore((s) => s.setCorsProxyUrl)
   const { t } = useTranslation()
 
   const [newPresetName, setNewPresetName] = useState('')
@@ -109,13 +110,21 @@ export default function AISettings() {
         {t('settings.aiConnection')}
       </h2>
 
-      {/* CORS Warning */}
-      <Card style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: 16 }}>
-        <AlertTriangle size={20} color="var(--warning)" style={{ flexShrink: 0, marginTop: 2 }} />
-        <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.5 }}>
-          <strong style={{ color: 'var(--warning)' }}>CORS Warning:</strong> {t('settings.corsWarning')}
-        </div>
-      </Card>
+      {/* CORS Proxy */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <Input
+          label={t('settings.corsProxyLabel')}
+          placeholder={t('settings.corsProxyPlaceholder')}
+          value={corsProxyUrl}
+          onChange={(e) => setCorsProxyUrl(e.target.value)}
+        />
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+          {corsProxyUrl
+            ? <>{t('settings.corsProxyActive')} <code style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--success)', backgroundColor: 'var(--glass)', padding: '1px 4px', borderRadius: 4 }}>{corsProxyUrl}</code></>
+            : t('settings.corsProxyHint')
+          }
+        </p>
+      </div>
 
       {/* Preset Selector */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
