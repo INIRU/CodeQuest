@@ -1,5 +1,6 @@
 import Editor from '@monaco-editor/react'
 import { useSettingsStore } from '@/stores/useSettingsStore'
+import { useTranslation } from '@/i18n'
 import type { BugHuntQuiz } from '@/types'
 
 interface BugHuntQuizProps {
@@ -16,6 +17,7 @@ export default function BugHuntQuizView({
   disabled,
 }: BugHuntQuizProps) {
   const theme = useSettingsStore((s) => s.theme)
+  const { t } = useTranslation()
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -46,6 +48,10 @@ export default function BugHuntQuizView({
           }}
         />
       </div>
+
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
+        {t('quiz.fixBugHint')}
+      </p>
     </div>
   )
 }

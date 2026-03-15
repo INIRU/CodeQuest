@@ -1,4 +1,5 @@
 import { Input } from '@/components/ui'
+import { useTranslation } from '@/i18n'
 import type { FillBlankQuiz } from '@/types'
 
 interface FillBlankQuizProps {
@@ -14,6 +15,7 @@ export default function FillBlankQuizView({
   onChange,
   disabled,
 }: FillBlankQuizProps) {
+  const { t } = useTranslation()
   const blanks = value ? value.split('|||') : quiz.answer.blanks.map(() => '')
 
   function handleBlankChange(index: number, newValue: string) {
@@ -53,7 +55,7 @@ export default function FillBlankQuizView({
             value={blankValue}
             onChange={(e) => handleBlankChange(i, e.target.value)}
             disabled={disabled}
-            placeholder={`Fill blank ${i + 1}...`}
+            placeholder={t('quiz.fillBlankPlaceholder')}
             style={{ fontFamily: 'monospace' }}
           />
         ))}

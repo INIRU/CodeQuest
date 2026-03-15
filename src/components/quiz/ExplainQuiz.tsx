@@ -1,3 +1,4 @@
+import { useTranslation } from '@/i18n'
 import type { ExplainQuiz } from '@/types'
 
 interface ExplainQuizProps {
@@ -13,6 +14,8 @@ export default function ExplainQuizView({
   onChange,
   disabled,
 }: ExplainQuizProps) {
+  const { t } = useTranslation()
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <p style={{ fontSize: 15, color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>
@@ -41,7 +44,7 @@ export default function ExplainQuizView({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         rows={8}
-        placeholder="Write your explanation here..."
+        placeholder={t('quiz.explainPlaceholder')}
         style={{
           padding: '12px 14px',
           fontSize: 14,

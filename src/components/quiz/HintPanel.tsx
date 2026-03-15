@@ -1,6 +1,7 @@
 import { Lightbulb, Lock, Unlock } from 'lucide-react'
 import { Card } from '@/components/ui'
 import { useQuizStore } from '@/stores/useQuizStore'
+import { useTranslation } from '@/i18n'
 import type { Quiz } from '@/types'
 
 interface HintPanelProps {
@@ -10,6 +11,7 @@ interface HintPanelProps {
 export default function HintPanel({ quiz }: HintPanelProps) {
   const hintsUsed = useQuizStore((s) => s.hintsUsed)
   const useHint = useQuizStore((s) => s.useHint)
+  const { t } = useTranslation()
 
   const variables = quiz.hints.variables
   const functions = quiz.hints.functions
@@ -18,17 +20,17 @@ export default function HintPanel({ quiz }: HintPanelProps) {
 
   const penaltyText =
     hintsUsed === 0
-      ? 'No penalty'
+      ? t('quiz.none')
       : hintsUsed === 1
-        ? '-20% penalty'
-        : '-50% penalty'
+        ? '-20%'
+        : '-50%'
 
   return (
     <Card style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Lightbulb size={18} style={{ color: 'var(--warning)' }} />
         <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--text)' }}>
-          Hints
+          {t('quiz.hints')}
         </span>
       </div>
 
@@ -121,7 +123,7 @@ export default function HintPanel({ quiz }: HintPanelProps) {
             }}
           >
             <Lock size={14} />
-            Logic Hint (-20%)
+            {t('quiz.logicHint')}
           </button>
         )}
       </div>
@@ -175,7 +177,7 @@ export default function HintPanel({ quiz }: HintPanelProps) {
               }}
             >
               <Lock size={14} />
-              Strong Hint (-50%)
+              {t('quiz.strongHint')}
             </button>
           )}
         </div>
@@ -191,7 +193,7 @@ export default function HintPanel({ quiz }: HintPanelProps) {
           borderTop: '1px solid var(--border)',
         }}
       >
-        {penaltyText}
+        {t('quiz.scorePenalty')}: {penaltyText}
       </div>
     </Card>
   )

@@ -1,3 +1,4 @@
+import { useTranslation } from '@/i18n'
 import type { OutputPredictionQuiz } from '@/types'
 
 interface OutputPredictionQuizProps {
@@ -13,6 +14,8 @@ export default function OutputPredictionQuizView({
   onChange,
   disabled,
 }: OutputPredictionQuizProps) {
+  const { t } = useTranslation()
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <p style={{ fontSize: 15, color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>
@@ -41,7 +44,7 @@ export default function OutputPredictionQuizView({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         rows={6}
-        placeholder="Predict the output..."
+        placeholder={t('quiz.outputPlaceholder')}
         style={{
           padding: '12px 14px',
           fontSize: 14,

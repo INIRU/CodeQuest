@@ -10,6 +10,7 @@ import RepoCard from '@/components/github/RepoCard'
 import FileTree from '@/components/github/FileTree'
 import CodeViewer from '@/components/github/CodeViewer'
 import QuizGenerateModal from '@/components/github/QuizGenerateModal'
+import { useTranslation } from '@/i18n'
 import type { GitHubRepo, GitHubTreeItem } from '@/types'
 
 function detectLanguageFromPath(filePath: string): string {
@@ -29,6 +30,7 @@ export default function MyReposPage() {
   const myRepos = useGithubStore((s) => s.myRepos)
   const isMyReposStale = useGithubStore((s) => s.isMyReposStale)
   const setMyRepos = useGithubStore((s) => s.setMyRepos)
+  const { t } = useTranslation()
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -121,7 +123,7 @@ export default function MyReposPage() {
         style={{ padding: 32 }}
       >
         <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)', margin: '0 0 24px 0' }}>
-          My Repos
+          {t('myRepos.title')}
         </h1>
         <Card
           style={{
@@ -137,13 +139,13 @@ export default function MyReposPage() {
         >
           <Lock size={40} color="var(--text-muted)" />
           <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', margin: 0 }}>
-            GitHub Token Required
+            {t('myRepos.tokenRequired')}
           </h2>
           <p style={{ fontSize: 14, color: 'var(--text-sub)', margin: 0, lineHeight: 1.5 }}>
-            To browse your private repositories, add a GitHub Personal Access Token in Settings.
+            {t('myRepos.tokenRequiredDesc')}
           </p>
           <Button variant="primary" onClick={() => navigate('/settings')}>
-            Go to Settings
+            {t('myRepos.goToSettings')}
           </Button>
         </Card>
       </motion.div>
@@ -162,11 +164,11 @@ export default function MyReposPage() {
         {selectedRepo && (
           <Button variant="ghost" size="sm" onClick={handleBack}>
             <ArrowLeft size={16} />
-            Back
+            {t('common.back')}
           </Button>
         )}
         <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
-          {selectedRepo ? selectedRepo.full_name : 'My Repos'}
+          {selectedRepo ? selectedRepo.full_name : t('myRepos.title')}
         </h1>
         {!selectedRepo && (
           <Button variant="ghost" size="sm" onClick={doFetch} loading={loading}>
@@ -254,7 +256,7 @@ export default function MyReposPage() {
               }}
             >
               <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-                Select a file from the tree to view its contents
+                {t('explore.selectFile')}
               </p>
             </div>
           )}
@@ -268,7 +270,7 @@ export default function MyReposPage() {
               }}
             >
               <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-                Select a repository to browse its files
+                {t('explore.selectFile')}
               </p>
             </div>
           )}

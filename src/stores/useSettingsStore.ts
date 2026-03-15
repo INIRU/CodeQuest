@@ -4,6 +4,7 @@ import type { AIPreset } from '@/types'
 
 interface SettingsState {
   theme: 'dark' | 'light'
+  language: 'ko' | 'en'
   languageFilter: string[]
   githubPat: string
   activePresetKey: string
@@ -11,6 +12,7 @@ interface SettingsState {
 
   setTheme: (theme: 'dark' | 'light') => void
   toggleTheme: () => void
+  setLanguage: (lang: 'ko' | 'en') => void
   setLanguageFilter: (languages: string[]) => void
   setGithubPat: (pat: string) => void
   setActivePresetKey: (key: string) => void
@@ -79,6 +81,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       theme: 'dark',
+      language: 'ko',
       languageFilter: [],
       githubPat: '',
       activePresetKey: 'openai',
@@ -87,6 +90,7 @@ export const useSettingsStore = create<SettingsState>()(
       setTheme: (theme) => set({ theme }),
       toggleTheme: () =>
         set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
+      setLanguage: (lang) => set({ language: lang }),
       setLanguageFilter: (languages) => set({ languageFilter: languages }),
       setGithubPat: (pat) => set({ githubPat: pat }),
       setActivePresetKey: (key) => set({ activePresetKey: key }),

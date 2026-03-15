@@ -9,6 +9,7 @@ import RepoCard from '@/components/github/RepoCard'
 import FileTree from '@/components/github/FileTree'
 import CodeViewer from '@/components/github/CodeViewer'
 import QuizGenerateModal from '@/components/github/QuizGenerateModal'
+import { useTranslation } from '@/i18n'
 import type { GitHubRepo, GitHubTreeItem } from '@/types'
 
 const LANGUAGES = [
@@ -31,6 +32,7 @@ export default function ExplorePage() {
   const languageFilter = useSettingsStore((s) => s.languageFilter)
   const setLanguageFilter = useSettingsStore((s) => s.setLanguageFilter)
   const githubPat = useSettingsStore((s) => s.githubPat)
+  const { t } = useTranslation()
 
   const { repos, loading, error, refetch } = useTrendingRepos()
 
@@ -112,11 +114,11 @@ export default function ExplorePage() {
         {selectedRepo && (
           <Button variant="ghost" size="sm" onClick={handleBack}>
             <ArrowLeft size={16} />
-            Back
+            {t('common.back')}
           </Button>
         )}
         <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
-          {selectedRepo ? selectedRepo.full_name : 'Explore'}
+          {selectedRepo ? selectedRepo.full_name : t('explore.title')}
         </h1>
         {!selectedRepo && (
           <Button variant="ghost" size="sm" onClick={refetch} loading={loading}>
@@ -222,7 +224,7 @@ export default function ExplorePage() {
               }}
             >
               <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-                Select a file from the tree to view its contents
+                {t('explore.selectFile')}
               </p>
             </div>
           )}
@@ -236,7 +238,7 @@ export default function ExplorePage() {
               }}
             >
               <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-                Select a repository to browse its files
+                {t('explore.selectFile')}
               </p>
             </div>
           )}

@@ -3,12 +3,14 @@ import { Shield, Eye, EyeOff } from 'lucide-react'
 import { Card, Input } from '@/components/ui'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { useGithubStore } from '@/stores/useGithubStore'
+import { useTranslation } from '@/i18n'
 
 export default function GitHubSettings() {
   const githubPat = useSettingsStore((s) => s.githubPat)
   const setGithubPat = useSettingsStore((s) => s.setGithubPat)
   const rateLimitRemaining = useGithubStore((s) => s.rateLimitRemaining)
   const rateLimitReset = useGithubStore((s) => s.rateLimitReset)
+  const { t } = useTranslation()
 
   const [showPat, setShowPat] = useState(false)
 
@@ -19,27 +21,25 @@ export default function GitHubSettings() {
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', margin: 0 }}>
-        GitHub Integration
+        {t('settings.github')}
       </h2>
 
       {/* Security Warning */}
       <Card style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: 16 }}>
         <Shield size={20} color="var(--warning)" style={{ flexShrink: 0, marginTop: 2 }} />
         <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.5 }}>
-          <strong style={{ color: 'var(--warning)' }}>Security Notice:</strong> Your
-          token is stored in the browser's localStorage and is never sent to any server
-          other than GitHub's API. We recommend using a{' '}
-          <strong>fine-grained personal access token</strong> with minimal read-only
-          permissions.
+          <strong style={{ color: 'var(--warning)' }}>Security Notice:</strong>{' '}
+          {t('settings.githubWarning')}{' '}
+          {t('settings.githubRecommend')}
         </div>
       </Card>
 
       {/* PAT Input with eye toggle */}
       <div style={{ position: 'relative' }}>
         <Input
-          label="Personal Access Token"
+          label={t('settings.pat')}
           type={showPat ? 'text' : 'password'}
-          placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+          placeholder={t('settings.patPlaceholder')}
           value={githubPat}
           onChange={(e) => setGithubPat(e.target.value)}
           style={{ paddingRight: 44 }}
@@ -75,7 +75,7 @@ export default function GitHubSettings() {
           }}
         >
           <span>
-            Rate Limit Remaining:{' '}
+            {t('settings.requestsRemaining')}:{' '}
             <strong
               style={{
                 color:
@@ -89,15 +89,14 @@ export default function GitHubSettings() {
               {rateLimitRemaining}
             </strong>
           </span>
-          {resetDate && <span>Resets at: {resetDate}</span>}
+          {resetDate && <span>{t('settings.resetsAt')}: {resetDate}</span>}
         </div>
       )}
 
       {/* Without token message */}
       {!githubPat && (
         <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
-          Without a token, GitHub API limits you to <strong>60 requests/hour</strong>.
-          With a token, the limit increases to <strong>5,000 requests/hour</strong>.
+          {t('settings.withoutToken')}
         </p>
       )}
     </section>

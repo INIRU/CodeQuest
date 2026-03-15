@@ -1,5 +1,6 @@
 import Editor from '@monaco-editor/react'
 import { useSettingsStore } from '@/stores/useSettingsStore'
+import { useTranslation } from '@/i18n'
 import type { CodeQuiz } from '@/types'
 
 interface CodeQuizProps {
@@ -16,6 +17,7 @@ export default function CodeQuizView({
   disabled,
 }: CodeQuizProps) {
   const theme = useSettingsStore((s) => s.theme)
+  const { t } = useTranslation()
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -25,7 +27,7 @@ export default function CodeQuizView({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-sub)' }}>
-          Requirements
+          {t('quiz.requirements')}
         </span>
         <ul
           style={{

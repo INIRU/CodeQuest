@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui'
 import { useSettingsStore } from '@/stores/useSettingsStore'
+import { useTranslation } from '@/i18n'
 
 const LANGUAGES = [
   'python',
@@ -20,6 +21,7 @@ const LANGUAGES = [
 export default function LanguageFilterSettings() {
   const languageFilter = useSettingsStore((s) => s.languageFilter)
   const setLanguageFilter = useSettingsStore((s) => s.setLanguageFilter)
+  const { t } = useTranslation()
 
   function toggleLanguage(lang: string) {
     if (languageFilter.includes(lang)) {
@@ -32,7 +34,7 @@ export default function LanguageFilterSettings() {
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', margin: 0 }}>
-        Language Filter
+        {t('settings.languageFilter')}
       </h2>
       <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
         Select languages to filter repositories in Explore. Leave empty to show all.

@@ -1,18 +1,22 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Home, Search, FolderGit2, History, Settings, Sun, Moon } from 'lucide-react'
+import { Home, Search, FolderGit2, History, Settings, Sun, Moon, Globe } from 'lucide-react'
 import { useSettingsStore } from '@/stores/useSettingsStore'
+import { useTranslation } from '@/i18n'
 
 const navItems = [
-  { to: '/', icon: Home, label: 'Dashboard' },
-  { to: '/explore', icon: Search, label: 'Explore' },
-  { to: '/my-repos', icon: FolderGit2, label: 'My Repos' },
-  { to: '/history', icon: History, label: 'History' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/', icon: Home, labelKey: 'nav.dashboard' },
+  { to: '/explore', icon: Search, labelKey: 'nav.explore' },
+  { to: '/my-repos', icon: FolderGit2, labelKey: 'nav.myRepos' },
+  { to: '/history', icon: History, labelKey: 'nav.history' },
+  { to: '/settings', icon: Settings, labelKey: 'nav.settings' },
 ]
 
 export default function MainLayout() {
   const theme = useSettingsStore((s) => s.theme)
   const toggleTheme = useSettingsStore((s) => s.toggleTheme)
+  const language = useSettingsStore((s) => s.language)
+  const setLanguage = useSettingsStore((s) => s.setLanguage)
+  const { t } = useTranslation()
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -30,12 +34,12 @@ export default function MainLayout() {
         }}
       >
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {navItems.map(({ to, icon: Icon, label }) => (
+          {navItems.map(({ to, icon: Icon, labelKey }) => (
             <NavLink
               key={to}
               to={to}
               end={to === '/'}
-              title={label}
+              title={t(labelKey)}
               style={({ isActive }) => ({
                 display: 'flex',
                 alignItems: 'center',
@@ -56,26 +60,56 @@ export default function MainLayout() {
           ))}
         </nav>
 
-        <button
-          onClick={toggleTheme}
-          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        <div
           style={{
             marginTop: 'auto',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            width: 40,
-            height: 40,
-            borderRadius: 10,
-            border: 'none',
-            background: 'transparent',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-            transition: 'color 0.2s',
+            gap: 4,
           }}
         >
-          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
+          <button
+            onClick={() => setLanguage(language === 'ko' ? 'en' : 'ko')}
+            title={language === 'ko' ? 'English' : '한국어'}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'color 0.2s',
+              fontSize: 11,
+              fontWeight: 600,
+            }}
+          >
+            <Globe size={20} />
+          </button>
+          <button
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'color 0.2s',
+            }}
+          >
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+        </div>
       </aside>
 
       <main style={{ flex: 1, overflow: 'auto' }}>

@@ -4,6 +4,7 @@ import type * as monacoNs from 'monaco-editor'
 import { AlertTriangle, Sparkles } from 'lucide-react'
 import { Button, Card } from '@/components/ui'
 import { useSettingsStore } from '@/stores/useSettingsStore'
+import { useTranslation } from '@/i18n'
 
 const MAX_DISPLAY_LINES = 1000
 const TRUNCATE_TO = 500
@@ -59,6 +60,7 @@ export default function CodeViewer({
   const theme = useSettingsStore((s) => s.theme)
   const editorRef = useRef<monacoNs.editor.IStandaloneCodeEditor | null>(null)
   const [selectedText, setSelectedText] = useState('')
+  const { t } = useTranslation()
 
   const lineCount = code.split('\n').length
   const isTruncated = lineCount > MAX_DISPLAY_LINES
@@ -99,7 +101,7 @@ export default function CodeViewer({
         >
           <AlertTriangle size={16} color="var(--warning)" />
           <span style={{ fontSize: 13, color: 'var(--text-sub)' }}>
-            File has {lineCount.toLocaleString()} lines. Showing first {TRUNCATE_TO} lines.
+            {t('explore.largeFile', { lines: lineCount.toLocaleString() })}
           </span>
         </Card>
       )}
@@ -146,7 +148,7 @@ export default function CodeViewer({
       >
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
           {isTruncated ? `${TRUNCATE_TO}` : lineCount} lines
-          {selectedText && ` | ${selectedText.split('\n').length} lines selected`}
+          {selectedText && ` | ${selectedText.split('\n').length} ${t('explore.linesSelected')}`}
         </span>
         <div style={{ display: 'flex', gap: 8 }}>
           {selectedText ? (
@@ -156,7 +158,7 @@ export default function CodeViewer({
               onClick={() => onGenerateFromSelection(selectedText)}
             >
               <Sparkles size={14} />
-              Generate from selection
+              {t('explore.generateFromSelection')}
             </Button>
           ) : (
             <Button
@@ -165,7 +167,7 @@ export default function CodeViewer({
               onClick={() => onGenerateFromFile(displayCode)}
             >
               <Sparkles size={14} />
-              Generate from entire file
+              {t('explore.generateFromFile')}
             </Button>
           )}
         </div>

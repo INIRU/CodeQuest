@@ -1,6 +1,7 @@
 import { AlertTriangle } from 'lucide-react'
 import Card from './Card'
 import Button from './Button'
+import { useTranslation } from '@/i18n'
 
 interface ErrorCardProps {
   message: string
@@ -9,6 +10,8 @@ interface ErrorCardProps {
 }
 
 export default function ErrorCard({ message, detail, onRetry }: ErrorCardProps) {
+  const { t } = useTranslation()
+
   return (
     <Card
       style={{
@@ -31,7 +34,7 @@ export default function ErrorCard({ message, detail, onRetry }: ErrorCardProps) 
       )}
       {onRetry && (
         <Button variant="secondary" size="sm" onClick={onRetry} style={{ marginTop: 8 }}>
-          Retry
+          {t('common.retry')}
         </Button>
       )}
     </Card>

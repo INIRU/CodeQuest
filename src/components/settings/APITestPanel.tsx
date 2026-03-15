@@ -3,11 +3,13 @@ import { Play, ChevronDown, ChevronUp, Check, AlertTriangle } from 'lucide-react
 import { Button, Card } from '@/components/ui'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { buildRequest, autoDetectResponsePath, extractByPath } from '@/services/ai'
+import { useTranslation } from '@/i18n'
 
 export default function APITestPanel() {
   const presets = useSettingsStore((s) => s.presets)
   const activePresetKey = useSettingsStore((s) => s.activePresetKey)
   const updatePreset = useSettingsStore((s) => s.updatePreset)
+  const { t } = useTranslation()
 
   const preset = presets[activePresetKey]
 
@@ -97,7 +99,7 @@ export default function APITestPanel() {
         onClick={handleRunTest}
       >
         <Play size={14} />
-        Run Test
+        {t('settings.runTest')}
       </Button>
 
       {/* Status + Timing */}
@@ -126,14 +128,7 @@ export default function APITestPanel() {
         <Card style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: 14 }}>
           <AlertTriangle size={18} color="var(--error)" style={{ flexShrink: 0, marginTop: 2 }} />
           <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.6 }}>
-            <strong style={{ color: 'var(--error)' }}>CORS Error</strong>
-            <br />
-            The API server blocked the request from the browser. To fix this:
-            <ul style={{ margin: '8px 0 0 0', paddingLeft: 20 }}>
-              <li>Use a local API endpoint (e.g., Ollama at localhost:11434)</li>
-              <li>Set up a CORS proxy (e.g., cors-anywhere)</li>
-              <li>Use an API that supports browser requests</li>
-            </ul>
+            <strong style={{ color: 'var(--error)' }}>{t('settings.corsError')}</strong>
           </div>
         </Card>
       )}
@@ -161,7 +156,7 @@ export default function APITestPanel() {
           }}
         >
           {requestOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          Request Details
+          {t('settings.request')}
         </button>
         {requestOpen && (
           <pre
@@ -213,7 +208,7 @@ export default function APITestPanel() {
             }}
           >
             {responseOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            Response JSON
+            {t('settings.response')}
           </button>
           {responseOpen && (
             <pre
@@ -250,7 +245,7 @@ export default function APITestPanel() {
         >
           <Check size={14} color="var(--success)" />
           <span style={{ color: 'var(--text-sub)' }}>
-            Detected path:{' '}
+            {t('settings.detectedPath')}:{' '}
             <code
               style={{
                 fontFamily: 'var(--font-mono)',
@@ -263,7 +258,7 @@ export default function APITestPanel() {
             </code>
           </span>
           <Button variant="secondary" size="sm" onClick={handleApplyDetectedPath}>
-            Apply
+            {t('settings.apply')}
           </Button>
         </div>
       )}
@@ -272,7 +267,7 @@ export default function APITestPanel() {
       {parsedText && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)' }}>
-            Parsed Text Preview
+            {t('settings.parsedResult')}
           </span>
           <div
             style={{

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Target, TrendingUp, Flame, BookOpen } from 'lucide-react'
 import { Button, Card } from '@/components/ui'
 import { useHistoryStore } from '@/stores/useHistoryStore'
+import { useTranslation } from '@/i18n'
 
 function getScoreColor(score: number): string {
   if (score >= 80) return 'var(--success)'
@@ -15,6 +16,7 @@ export default function DashboardPage() {
   const quizzes = useHistoryStore((s) => s.quizzes)
   const getStats = useHistoryStore((s) => s.getStats)
   const stats = getStats()
+  const { t } = useTranslation()
 
   const languageEntries = Object.entries(stats.byLanguage).sort(
     ([, a], [, b]) => b - a,
@@ -54,12 +56,12 @@ export default function DashboardPage() {
               margin: 0,
             }}
           >
-            No quizzes yet
+            {t('dashboard.noQuizzes')}
           </h2>
           <p style={{ fontSize: 14, color: 'var(--text-sub)', margin: 0 }}>
-            Start exploring trending repos and take your first quiz!
+            {t('dashboard.noQuizzesDesc')}
           </p>
-          <Button onClick={() => navigate('/explore')}>Start Exploring</Button>
+          <Button onClick={() => navigate('/explore')}>{t('dashboard.startExploring')}</Button>
         </Card>
       </motion.div>
     )
@@ -80,7 +82,7 @@ export default function DashboardPage() {
           margin: '0 0 24px 0',
         }}
       >
-        Dashboard
+        {t('dashboard.title')}
       </h1>
 
       {/* Stats row */}
@@ -112,7 +114,7 @@ export default function DashboardPage() {
               <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)' }}>
                 {stats.totalSolved}
               </div>
-              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Solved</div>
+              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>{t('dashboard.solved')}</div>
             </div>
           </div>
         </Card>
@@ -137,7 +139,7 @@ export default function DashboardPage() {
               <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)' }}>
                 {Math.round(stats.averageScore)}
               </div>
-              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Avg Score</div>
+              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>{t('dashboard.avgScore')}</div>
             </div>
           </div>
         </Card>
@@ -165,7 +167,7 @@ export default function DashboardPage() {
                   d
                 </span>
               </div>
-              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Streak</div>
+              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>{t('dashboard.streak')}</div>
             </div>
           </div>
         </Card>
@@ -190,7 +192,7 @@ export default function DashboardPage() {
               <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)' }}>
                 {Object.keys(stats.byLanguage).length}
               </div>
-              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Languages</div>
+              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>{t('dashboard.languages')}</div>
             </div>
           </div>
         </Card>
@@ -198,9 +200,9 @@ export default function DashboardPage() {
 
       {/* Quick actions */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-        <Button onClick={() => navigate('/explore')}>Explore Trending</Button>
+        <Button onClick={() => navigate('/explore')}>{t('dashboard.exploreBtn')}</Button>
         <Button variant="secondary" onClick={() => navigate('/my-repos')}>
-          My Repos
+          {t('dashboard.myReposBtn')}
         </Button>
       </div>
 
@@ -215,7 +217,7 @@ export default function DashboardPage() {
               margin: '0 0 16px 0',
             }}
           >
-            Language Breakdown
+            {t('dashboard.byLanguage')}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {languageEntries.map(([lang, count]) => {
@@ -280,14 +282,14 @@ export default function DashboardPage() {
                 margin: 0,
               }}
             >
-              Recent Quizzes
+              {t('dashboard.recent')}
             </h2>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/history')}
             >
-              View all
+              {t('dashboard.viewAll')}
             </Button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

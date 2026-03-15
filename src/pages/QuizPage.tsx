@@ -14,6 +14,7 @@ import OutputPredictionQuizView from '@/components/quiz/OutputPredictionQuiz'
 import { useQuizStore } from '@/stores/useQuizStore'
 import { useHistoryStore } from '@/stores/useHistoryStore'
 import { gradeQuiz, calculateFinalScore } from '@/services/quiz-generator'
+import { useTranslation } from '@/i18n'
 import type {
   Quiz,
   ExplainQuiz,
@@ -25,13 +26,16 @@ import type {
   QuizType,
 } from '@/types'
 
-const quizTypeLabels: Record<QuizType, string> = {
-  explain: 'Explain Code',
-  'fill-blank': 'Fill in the Blanks',
-  code: 'Write Code',
-  'bug-hunt': 'Bug Hunt',
-  'code-review': 'Code Review',
-  'output-prediction': 'Predict Output',
+function useQuizTypeLabels(): Record<QuizType, string> {
+  const { t } = useTranslation()
+  return {
+    explain: t('quiz.explain'),
+    'fill-blank': t('quiz.fillBlank'),
+    code: t('quiz.code'),
+    'bug-hunt': t('quiz.bugHunt'),
+    'code-review': t('quiz.codeReview'),
+    'output-prediction': t('quiz.output'),
+  }
 }
 
 const quizTypeIcons: Record<QuizType, JSX.Element> = {
@@ -119,6 +123,8 @@ export default function QuizPage() {
   const setIsGrading = useQuizStore((s) => s.setIsGrading)
   const getElapsedTime = useQuizStore((s) => s.getElapsedTime)
   const addQuiz = useHistoryStore((s) => s.addQuiz)
+  const { t } = useTranslation()
+  const quizTypeLabels = useQuizTypeLabels()
 
   const handleSubmit = useCallback(async () => {
     if (!currentQuiz || !userAnswer.trim() || isGrading) return
@@ -198,12 +204,12 @@ export default function QuizPage() {
               margin: 0,
             }}
           >
-            No quiz loaded
+            {t('quiz.noQuiz')}
           </h2>
           <p style={{ fontSize: 14, color: 'var(--text-sub)', margin: 0 }}>
-            Explore trending repos and generate a quiz to get started.
+            {t('dashboard.noQuizzesDesc')}
           </p>
-          <Button onClick={() => navigate('/explore')}>Explore</Button>
+          <Button onClick={() => navigate('/explore')}>{t('quiz.exploreBtn')}</Button>
         </Card>
       </motion.div>
     )
@@ -288,7 +294,7 @@ export default function QuizPage() {
               size="lg"
               style={{ alignSelf: 'flex-start' }}
             >
-              Submit Answer
+              {t('quiz.submit')}
             </Button>
           )}
 

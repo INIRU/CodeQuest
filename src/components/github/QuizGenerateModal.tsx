@@ -5,22 +5,29 @@ import { X } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { useQuizStore } from '@/stores/useQuizStore'
 import { generateQuiz } from '@/services/quiz-generator'
+import { useTranslation } from '@/i18n'
 import type { QuizType, Difficulty } from '@/types'
 
-const QUIZ_TYPES: Array<{ type: QuizType; name: string; description: string }> = [
-  { type: 'explain', name: 'Explain Code', description: 'Explain what the code does' },
-  { type: 'fill-blank', name: 'Fill Blanks', description: 'Fill in missing code parts' },
-  { type: 'code', name: 'Write Code', description: 'Write code to solve a problem' },
-  { type: 'bug-hunt', name: 'Bug Hunt', description: 'Find and fix bugs in code' },
-  { type: 'code-review', name: 'Code Review', description: 'Review and improve code' },
-  { type: 'output-prediction', name: 'Predict Output', description: 'Predict what code outputs' },
-]
+function useQuizTypes() {
+  const { t } = useTranslation()
+  return [
+    { type: 'explain' as QuizType, name: t('quiz.explain'), description: t('quiz.explainDesc') },
+    { type: 'fill-blank' as QuizType, name: t('quiz.fillBlank'), description: t('quiz.fillBlankDesc') },
+    { type: 'code' as QuizType, name: t('quiz.code'), description: t('quiz.codeDesc') },
+    { type: 'bug-hunt' as QuizType, name: t('quiz.bugHunt'), description: t('quiz.bugHuntDesc') },
+    { type: 'code-review' as QuizType, name: t('quiz.codeReview'), description: t('quiz.codeReviewDesc') },
+    { type: 'output-prediction' as QuizType, name: t('quiz.output'), description: t('quiz.outputDesc') },
+  ]
+}
 
-const DIFFICULTIES: Array<{ value: Difficulty; label: string }> = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
-]
+function useDifficulties() {
+  const { t } = useTranslation()
+  return [
+    { value: 'beginner' as Difficulty, label: t('quiz.beginner') },
+    { value: 'intermediate' as Difficulty, label: t('quiz.intermediate') },
+    { value: 'advanced' as Difficulty, label: t('quiz.advanced') },
+  ]
+}
 
 interface QuizGenerateModalProps {
   open: boolean
@@ -42,6 +49,9 @@ export default function QuizGenerateModal({
   const navigate = useNavigate()
   const setCurrentQuiz = useQuizStore((s) => s.setCurrentQuiz)
   const setIsGenerating = useQuizStore((s) => s.setIsGenerating)
+  const { t } = useTranslation()
+  const QUIZ_TYPES = useQuizTypes()
+  const DIFFICULTIES = useDifficulties()
 
   const [selectedType, setSelectedType] = useState<QuizType>('explain')
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('intermediate')
@@ -109,7 +119,7 @@ export default function QuizGenerateModal({
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Dialog.Title style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
-              Generate Quiz
+              {t('quizModal.title')}
             </Dialog.Title>
             <Dialog.Close asChild>
               <button
@@ -130,7 +140,7 @@ export default function QuizGenerateModal({
           {/* Quiz Type Grid */}
           <div>
             <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-sub)', marginBottom: 8, display: 'block' }}>
-              Quiz Type
+              {t('quizModal.quizType')}
             </label>
             <div
               style={{
@@ -166,7 +176,7 @@ export default function QuizGenerateModal({
           {/* Difficulty */}
           <div>
             <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-sub)', marginBottom: 8, display: 'block' }}>
-              Difficulty
+              {t('quizModal.difficulty')}
             </label>
             <div style={{ display: 'flex', gap: 8 }}>
               {DIFFICULTIES.map(({ value, label }) => (
@@ -195,7 +205,7 @@ export default function QuizGenerateModal({
 
           {/* Code info */}
           <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
-            {lineCount} lines of {language} from {sourceFile}
+            {t('quizModal.linesOfCode', { lines: lineCount, language, file: sourceFile })}
           </p>
 
           {/* Error */}
@@ -211,7 +221,7 @@ export default function QuizGenerateModal({
             onClick={handleGenerate}
             style={{ width: '100%' }}
           >
-            Generate Quiz
+            {t('quizModal.generate')}
           </Button>
         </Dialog.Content>
       </Dialog.Portal>

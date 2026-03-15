@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Clock, Lightbulb, FileText } from 'lucide-react'
 import { Card, Badge } from '@/components/ui'
 import { useHistoryStore } from '@/stores/useHistoryStore'
+import { useTranslation } from '@/i18n'
 import type { QuizType } from '@/types'
 
 function getScoreColor(score: number): string {
@@ -30,6 +31,7 @@ export default function HistoryPage() {
   const quizzes = useHistoryStore((s) => s.quizzes)
   const [filterType, setFilterType] = useState<QuizType | 'all'>('all')
   const [filterLang, setFilterLang] = useState<string>('all')
+  const { t } = useTranslation()
 
   const uniqueTypes = useMemo(() => {
     const set = new Set<QuizType>()
@@ -66,7 +68,7 @@ export default function HistoryPage() {
           margin: '0 0 24px 0',
         }}
       >
-        History
+        {t('history.title')}
       </h1>
 
       {/* Filter by type */}
@@ -86,15 +88,15 @@ export default function HistoryPage() {
             active={filterType === 'all'}
             onClick={() => setFilterType('all')}
           >
-            All types
+            {t('history.allTypes')}
           </Badge>
-          {uniqueTypes.map((t) => (
+          {uniqueTypes.map((tp) => (
             <Badge
-              key={t}
-              active={filterType === t}
-              onClick={() => setFilterType(t)}
+              key={tp}
+              active={filterType === tp}
+              onClick={() => setFilterType(tp)}
             >
-              {t}
+              {tp}
             </Badge>
           ))}
         </div>
@@ -110,14 +112,14 @@ export default function HistoryPage() {
             marginBottom: 8,
           }}
         >
-          Language
+          {t('settings.language')}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           <Badge
             active={filterLang === 'all'}
             onClick={() => setFilterLang('all')}
           >
-            All languages
+            {t('history.allLanguages')}
           </Badge>
           {uniqueLanguages.map((l) => (
             <Badge
@@ -145,7 +147,7 @@ export default function HistoryPage() {
         >
           <FileText size={40} style={{ color: 'var(--text-muted)' }} />
           <p style={{ fontSize: 15, color: 'var(--text-sub)', margin: 0 }}>
-            No quizzes match the current filters
+            {t('history.noResults')}
           </p>
         </Card>
       ) : (

@@ -5,9 +5,11 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
+  Key,
 } from 'lucide-react'
-import { Button, Card, Input } from '@/components/ui'
+import { Button, Card, Input, Select } from '@/components/ui'
 import { useSettingsStore } from '@/stores/useSettingsStore'
+import { useTranslation } from '@/i18n'
 import APITestPanel from './APITestPanel'
 
 const DEFAULT_PRESET_KEYS = ['openai', 'claude', 'gemini', 'ollama']
@@ -19,9 +21,11 @@ export default function AISettings() {
   const updatePreset = useSettingsStore((s) => s.updatePreset)
   const addPreset = useSettingsStore((s) => s.addPreset)
   const deletePreset = useSettingsStore((s) => s.deletePreset)
+  const { t } = useTranslation()
 
   const [newPresetName, setNewPresetName] = useState('')
   const [testOpen, setTestOpen] = useState(false)
+  const [showApiKey, setShowApiKey] = useState(false)
 
   const preset = presets[activePresetKey]
   const headers = preset?.headers ?? {}
@@ -38,7 +42,7 @@ export default function AISettings() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       apiKey: '',
-      bodyTemplate: '{\n  "messages": "{{MESSAGES}}",\n  "prompt": "{{PROMPT}}"\n}',
+      bodyTemplate: '{\n  "messages": {{MESSAGES}}\n}',
       responsePath: '',
     })
     setNewPresetName('')
@@ -82,57 +86,51 @@ export default function AISettings() {
 
   if (!preset) return null
 
+  // Build select options with descriptions
+  const presetOptions = Object.entries(presets).map(([key, p]) => ({
+    value: key,
+    label: p.name,
+    description: key === 'openai' ? 'CORS OK'
+      : key === 'claude' ? 'Proxy required'
+      : key === 'gemini' ? 'Proxy required'
+      : key === 'ollama' ? 'Local (localhost)'
+      : undefined,
+  }))
+
+  // Find which headers use {{KEY}} to show user
+  const headersUsingKey = Object.entries(headers)
+    .filter(([, v]) => v.includes('{{KEY}}'))
+    .map(([k]) => k)
+  const urlUsesKey = preset.url.includes('{{KEY}}')
+
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', margin: 0 }}>
-        AI API Connection
+        {t('settings.aiConnection')}
       </h2>
 
       {/* CORS Warning */}
       <Card style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: 16 }}>
         <AlertTriangle size={20} color="var(--warning)" style={{ flexShrink: 0, marginTop: 2 }} />
         <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.5 }}>
-          <strong style={{ color: 'var(--warning)' }}>CORS Warning:</strong> Browser-based API
-          calls may be blocked by CORS policies. If you encounter errors, consider using a
-          CORS proxy or a local API endpoint (e.g., Ollama).
+          <strong style={{ color: 'var(--warning)' }}>CORS Warning:</strong> {t('settings.corsWarning')}
         </div>
       </Card>
 
       {/* Preset Selector */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label
-            htmlFor="preset-select"
-            style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-sub)' }}
-          >
-            Preset
-          </label>
-          <select
-            id="preset-select"
+        <div style={{ flex: 1 }}>
+          <Select
+            label={t('settings.preset')}
             value={activePresetKey}
-            onChange={(e) => setActivePresetKey(e.target.value)}
-            style={{
-              padding: '10px 14px',
-              fontSize: 14,
-              borderRadius: 10,
-              border: '1px solid var(--border)',
-              backgroundColor: 'var(--surface)',
-              color: 'var(--text)',
-              outline: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            {Object.entries(presets).map(([key, p]) => (
-              <option key={key} value={key}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            onChange={setActivePresetKey}
+            options={presetOptions}
+            placeholder="Select a preset..."
+          />
         </div>
         {!isDefault && (
           <Button variant="danger" size="sm" onClick={handleDeletePreset}>
             <Trash2 size={14} />
-            Delete
           </Button>
         )}
       </div>
@@ -141,8 +139,8 @@ export default function AISettings() {
       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
         <div style={{ flex: 1 }}>
           <Input
-            label="Add Custom Preset"
-            placeholder="Preset name"
+            label={t('settings.addCustomPreset')}
+            placeholder={t('settings.presetName')}
             value={newPresetName}
             onChange={(e) => setNewPresetName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddPreset()}
@@ -150,36 +148,88 @@ export default function AISettings() {
         </div>
         <Button variant="secondary" size="md" onClick={handleAddPreset}>
           <Plus size={14} />
-          Add
+          {t('settings.add')}
         </Button>
       </div>
 
       {/* URL */}
       <Input
-        label="API URL"
+        label={t('settings.apiUrl')}
         placeholder="https://api.example.com/v1/chat/completions"
         value={preset.url}
         onChange={(e) => updatePreset(activePresetKey, { url: e.target.value })}
       />
 
       {/* API Key */}
-      <Input
-        label="API Key"
-        type="password"
-        placeholder="sk-..."
-        value={preset.apiKey}
-        onChange={(e) => updatePreset(activePresetKey, { apiKey: e.target.value })}
-      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Key size={14} />
+          {t('settings.apiKey')}
+        </label>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            type={showApiKey ? 'text' : 'password'}
+            value={preset.apiKey}
+            onChange={(e) => updatePreset(activePresetKey, { apiKey: e.target.value })}
+            placeholder={t('settings.apiKeyPlaceholder')}
+            style={{
+              flex: 1,
+              padding: '10px 14px',
+              fontSize: 14,
+              borderRadius: 10,
+              border: '1px solid var(--border)',
+              backgroundColor: 'var(--surface)',
+              color: 'var(--text)',
+              outline: 'none',
+              fontFamily: 'var(--font-mono)',
+            }}
+          />
+          <button
+            onClick={() => setShowApiKey(!showApiKey)}
+            style={{
+              padding: '8px 12px',
+              borderRadius: 10,
+              border: '1px solid var(--border)',
+              backgroundColor: 'var(--surface)',
+              color: 'var(--text-sub)',
+              cursor: 'pointer',
+              fontSize: 13,
+            }}
+          >
+            {showApiKey ? t('settings.hide') : t('settings.show')}
+          </button>
+        </div>
+        {/* Explanation of where the key goes */}
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+          {headersUsingKey.length > 0 || urlUsesKey ? (
+            <span>
+              {t('settings.apiKeyReplacesIn')}{' '}
+              {urlUsesKey && <span style={{ fontFamily: 'var(--font-mono)' }}>{t('common.url')}</span>}
+              {urlUsesKey && headersUsingKey.length > 0 && ', '}
+              {headersUsingKey.map((h, i) => (
+                <span key={h}>
+                  {i > 0 && ', '}
+                  {t('common.header')} <span style={{ fontFamily: 'var(--font-mono)' }}>{h}</span>
+                </span>
+              ))}
+            </span>
+          ) : (
+            <span>
+              {t('settings.apiKeyAddHint')}
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* Headers Editor */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-sub)' }}>
-          Headers
+          {t('settings.headers')}
         </label>
         {Object.entries(headers).map(([key, value], idx) => (
           <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <input
-              placeholder="Header name"
+              placeholder={t('settings.headerName')}
               value={key}
               onChange={(e) => handleHeaderChange(key, 'key', e.target.value)}
               style={{
@@ -195,7 +245,7 @@ export default function AISettings() {
               }}
             />
             <input
-              placeholder="Value"
+              placeholder={t('settings.headerValue')}
               value={value}
               onChange={(e) => handleHeaderChange(key, 'value', e.target.value)}
               style={{
@@ -228,14 +278,14 @@ export default function AISettings() {
         ))}
         <Button variant="ghost" size="sm" onClick={handleAddHeader} style={{ alignSelf: 'flex-start' }}>
           <Plus size={14} />
-          Add Header
+          {t('settings.addHeader')}
         </Button>
       </div>
 
       {/* Body Template */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-sub)' }}>
-          Body Template
+          {t('settings.bodyTemplate')}
         </label>
         <textarea
           value={preset.bodyTemplate}
@@ -255,15 +305,14 @@ export default function AISettings() {
           }}
         />
         <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
-          Use {'{{MESSAGES}}'} for the full messages array or {'{{PROMPT}}'} for the
-          combined prompt text. Use {'{{KEY}}'} in URL or headers for the API key.
+          {t('settings.bodyTemplateHint')}
         </p>
       </div>
 
       {/* Response Path */}
       <Input
-        label="Response Path"
-        placeholder="choices.0.message.content"
+        label={t('settings.responsePath')}
+        placeholder="choices[0].message.content"
         value={preset.responsePath}
         onChange={(e) => updatePreset(activePresetKey, { responsePath: e.target.value })}
         style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}
@@ -287,7 +336,7 @@ export default function AISettings() {
           }}
         >
           {testOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          Test Connection
+          {t('settings.testConnection')}
         </button>
         {testOpen && <APITestPanel />}
       </div>

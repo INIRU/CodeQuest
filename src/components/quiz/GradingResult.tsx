@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Award, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import { Card } from '@/components/ui'
+import { useTranslation } from '@/i18n'
 import type { GradingResult as GradingResultType } from '@/types'
 
 interface GradingResultProps {
@@ -17,12 +18,6 @@ function getScoreColor(score: number): string {
   return 'var(--error)'
 }
 
-function getAwardText(score: number): string {
-  if (score >= 80) return 'Excellent!'
-  if (score >= 50) return 'Good effort'
-  return 'Keep practicing'
-}
-
 export default function GradingResultView({
   result,
   rawScore,
@@ -30,6 +25,13 @@ export default function GradingResultView({
   finalScore,
 }: GradingResultProps) {
   const [showAnswer, setShowAnswer] = useState(false)
+  const { t } = useTranslation()
+
+  function getAwardText(score: number): string {
+    if (score >= 80) return t('quiz.excellent')
+    if (score >= 50) return t('quiz.goodEffort')
+    return t('quiz.keepPracticing')
+  }
 
   return (
     <motion.div
@@ -76,7 +78,7 @@ export default function GradingResultView({
               color: 'var(--text-sub)',
             }}
           >
-            Raw score: {rawScore} | Hints used: {hintsUsed} | Penalty:{' '}
+            {t('quiz.raw')}: {rawScore} | {t('quiz.hints')}: {hintsUsed} | {t('quiz.penalty')}:{' '}
             {hintsUsed === 1 ? '-20%' : '-50%'}
           </div>
         )}
@@ -160,7 +162,7 @@ export default function GradingResultView({
             }}
           >
             {showAnswer ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            View correct answer
+            {t('quiz.viewCorrectAnswer')}
           </button>
           {showAnswer && (
             <pre
