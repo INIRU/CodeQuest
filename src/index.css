@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --glass: rgba(0,0,0,0.03);
+  --border: rgba(0,0,0,0.08);
+  --primary: #6366F1;
+  --primary-end: #8B5CF6;
+  --success: #059669;
+  --error: #DC2626;
+  --warning: #D97706;
+  --text: #0F172A;
+  --text-sub: #475569;
+  --text-muted: #94A3B8;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+.dark {
+  --bg: #0A0A0F;
+  --surface: #12121A;
+  --glass: rgba(255,255,255,0.05);
+  --border: rgba(255,255,255,0.08);
+  --primary: #6366F1;
+  --primary-end: #8B5CF6;
+  --success: #10B981;
+  --error: #EF4444;
+  --warning: #F59E0B;
+  --text: #E2E8F0;
+  --text-sub: #94A3B8;
+  --text-muted: #64748B;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  transition: background-color 0.2s, color 0.2s;
+}
