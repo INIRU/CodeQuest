@@ -22,6 +22,10 @@ const en = {
     noQuizzes: 'No quizzes yet',
     noQuizzesDesc: 'Start by exploring trending repos and generating your first quiz!',
     startExploring: 'Start Exploring',
+    continueQuiz: 'Continue Quiz',
+    continueDesc: 'You have an unfinished quiz',
+    discard: 'Discard',
+    seriesProgress: 'Question {current} / {total}',
   },
   // Explore
   explore: {
@@ -110,6 +114,8 @@ const en = {
     allTypes: 'All types',
     allLanguages: 'All languages',
     noResults: 'No quizzes found',
+    deleteConfirm: 'Delete this quiz record?',
+    delete: 'Delete',
   },
   // Settings
   settings: {

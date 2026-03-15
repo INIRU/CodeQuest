@@ -6,6 +6,7 @@ interface HistoryState {
   quizzes: QuizHistory[]
 
   addQuiz: (quiz: QuizHistory) => void
+  deleteQuiz: (id: string) => void
   clearHistory: () => void
   getStats: () => Stats
 }
@@ -63,6 +64,9 @@ export const useHistoryStore = create<HistoryState>()(
 
       addQuiz: (quiz) =>
         set((state) => ({ quizzes: [quiz, ...state.quizzes] })),
+
+      deleteQuiz: (id) =>
+        set((state) => ({ quizzes: state.quizzes.filter((q) => q.id !== id) })),
 
       clearHistory: () => set({ quizzes: [] }),
 

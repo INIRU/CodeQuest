@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Clock, Lightbulb, FileText } from 'lucide-react'
+import { Clock, Lightbulb, FileText, Trash2 } from 'lucide-react'
 import { Card, Badge } from '@/components/ui'
 import { useHistoryStore } from '@/stores/useHistoryStore'
 import { useTranslation } from '@/i18n'
@@ -29,6 +29,7 @@ function formatDate(iso: string): string {
 
 export default function HistoryPage() {
   const quizzes = useHistoryStore((s) => s.quizzes)
+  const deleteQuiz = useHistoryStore((s) => s.deleteQuiz)
   const [filterType, setFilterType] = useState<QuizType | 'all'>('all')
   const [filterLang, setFilterLang] = useState<string>('all')
   const { t } = useTranslation()
@@ -217,17 +218,55 @@ export default function HistoryPage() {
                   </div>
                 </div>
 
-                {/* Score */}
+                {/* Score and delete */}
                 <div
                   style={{
-                    fontSize: 32,
-                    fontWeight: 700,
-                    color: getScoreColor(q.score),
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
                     flexShrink: 0,
                     marginLeft: 16,
                   }}
                 >
-                  {q.score}
+                  <div
+                    style={{
+                      fontSize: 32,
+                      fontWeight: 700,
+                      color: getScoreColor(q.score),
+                    }}
+                  >
+                    {q.score}
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(t('history.deleteConfirm'))) {
+                        deleteQuiz(q.id)
+                      }
+                    }}
+                    title={t('history.delete')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 6,
+                      borderRadius: 6,
+                      color: 'var(--text-muted)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'color 0.15s, background 0.15s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = 'var(--error)'
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = 'var(--text-muted)'
+                      e.currentTarget.style.background = 'none'
+                    }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
             </Card>

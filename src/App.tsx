@@ -8,6 +8,7 @@ import QuizPage from '@/pages/QuizPage'
 import HistoryPage from '@/pages/HistoryPage'
 import SettingsPage from '@/pages/SettingsPage'
 import { useSettingsStore } from '@/stores/useSettingsStore'
+import { useAutoSync } from '@/hooks/useAutoSync'
 
 function App() {
   const theme = useSettingsStore((s) => s.theme)
@@ -19,6 +20,8 @@ function App() {
       document.documentElement.classList.remove('dark')
     }
   }, [theme])
+
+  useAutoSync()
 
   return (
     <HashRouter>

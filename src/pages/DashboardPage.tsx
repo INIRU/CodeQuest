@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Target, TrendingUp, Flame, BookOpen } from 'lucide-react'
+import { Target, TrendingUp, Flame, BookOpen, Play, X } from 'lucide-react'
 import { Button, Card } from '@/components/ui'
 import { useHistoryStore } from '@/stores/useHistoryStore'
+import { useQuizStore } from '@/stores/useQuizStore'
 import { useTranslation } from '@/i18n'
 
 function getScoreColor(score: number): string {
@@ -18,6 +19,22 @@ export default function DashboardPage() {
   const stats = getStats()
   const { t } = useTranslation()
 
+  // Resume quiz detection
+  const currentQuiz = useQuizStore((s) => s.currentQuiz)
+  const gradingResult = useQuizStore((s) => s.gradingResult)
+  const quizSeries = useQuizStore((s) => s.quizSeries)
+  const currentIndex = useQuizStore((s) => s.currentIndex)
+  const seriesGradingResults = useQuizStore((s) => s.seriesGradingResults)
+  const resetQuiz = useQuizStore((s) => s.reset)
+
+  const hasIncompleteQuiz = (() => {
+    if (!currentQuiz) return false
+    if (quizSeries.length > 1) {
+      return seriesGradingResults.some((r) => r === null)
+    }
+    return gradingResult === null
+  })()
+
   const languageEntries = Object.entries(stats.byLanguage).sort(
     ([, a], [, b]) => b - a,
   )
@@ -32,11 +49,63 @@ export default function DashboardPage() {
         style={{
           padding: 32,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: '60vh',
+          gap: 24,
         }}
       >
+        {/* Resume card in empty state */}
+        {hasIncompleteQuiz && currentQuiz && (
+          <Card
+            style={{
+              maxWidth: 400,
+              width: '100%',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.02))',
+              border: '1px solid rgba(99, 102, 241, 0.2)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 12,
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>
+                {t('dashboard.continueQuiz')}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>
+                {t('dashboard.continueDesc')}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>
+                {currentQuiz.type} - {currentQuiz.language} - {currentQuiz.sourceFile}
+                {quizSeries.length > 1 && (
+                  <span>
+                    {' '}
+                    ({t('dashboard.seriesProgress', {
+                      current: String(currentIndex + 1),
+                      total: String(quizSeries.length),
+                    })})
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Button variant="secondary" size="sm" onClick={() => resetQuiz()}>
+                  <X size={14} style={{ marginRight: 4 }} />
+                  {t('dashboard.discard')}
+                </Button>
+                <Button size="sm" onClick={() => navigate(`/quiz/${currentQuiz.id}`)}>
+                  <Play size={14} style={{ marginRight: 4 }} />
+                  {t('dashboard.continueQuiz')}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
         <Card
           style={{
             textAlign: 'center',
@@ -84,6 +153,99 @@ export default function DashboardPage() {
       >
         {t('dashboard.title')}
       </h1>
+
+      {/* Resume incomplete quiz */}
+      {hasIncompleteQuiz && currentQuiz && (
+        <Card
+          style={{
+            marginBottom: 24,
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.02))',
+            border: '1px solid rgba(99, 102, 241, 0.2)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  color: 'var(--text)',
+                  marginBottom: 4,
+                }}
+              >
+                {t('dashboard.continueQuiz')}
+              </div>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: 'var(--text-sub)',
+                  marginBottom: 8,
+                }}
+              >
+                {t('dashboard.continueDesc')}
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 6,
+                  fontSize: 13,
+                  color: 'var(--text-sub)',
+                }}
+              >
+                <span>{currentQuiz.type}</span>
+                <span>-</span>
+                <span>{currentQuiz.language}</span>
+                <span>-</span>
+                <span
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: 200,
+                  }}
+                >
+                  {currentQuiz.sourceFile}
+                </span>
+                {quizSeries.length > 1 && (
+                  <>
+                    <span>-</span>
+                    <span>
+                      {t('dashboard.seriesProgress', {
+                        current: String(currentIndex + 1),
+                        total: String(quizSeries.length),
+                      })}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0, marginLeft: 16 }}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => resetQuiz()}
+              >
+                <X size={14} style={{ marginRight: 4 }} />
+                {t('dashboard.discard')}
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => navigate(`/quiz/${currentQuiz.id}`)}
+              >
+                <Play size={14} style={{ marginRight: 4 }} />
+                {t('dashboard.continueQuiz')}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Stats row */}
       <div

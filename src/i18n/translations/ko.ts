@@ -20,6 +20,10 @@ const ko = {
     noQuizzes: '아직 풀이 기록이 없습니다',
     noQuizzesDesc: '트렌딩 레포를 탐색하고 첫 번째 퀴즈를 풀어보세요!',
     startExploring: '탐색 시작하기',
+    continueQuiz: '이어서 풀기',
+    continueDesc: '아직 끝나지 않은 퀴즈가 있습니다',
+    discard: '포기',
+    seriesProgress: '문제 {current} / {total}',
   },
   explore: {
     title: '탐색',
@@ -103,6 +107,8 @@ const ko = {
     allTypes: '전체 유형',
     allLanguages: '전체 언어',
     noResults: '풀이 기록이 없습니다',
+    deleteConfirm: '이 풀이 기록을 삭제하시겠습니까?',
+    delete: '삭제',
   },
   settings: {
     title: '설정',
