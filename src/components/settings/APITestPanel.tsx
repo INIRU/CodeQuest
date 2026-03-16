@@ -43,7 +43,7 @@ export default function APITestPanel() {
     const start = performance.now()
     try {
       const targetUrl = corsProxy
-        ? `${corsProxy.replace(/\/+$/, '')}/${builtRequest.url}`
+        ? `${corsProxy}${corsProxy.endsWith('?') || corsProxy.endsWith('=') ? '' : '/'}${builtRequest.url}`
         : builtRequest.url
 
       const response = await fetch(targetUrl, {

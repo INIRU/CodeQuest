@@ -87,7 +87,7 @@ export async function callAI(
     // Apply CORS proxy if configured
     const corsProxy = useSettingsStore.getState().corsProxyUrl
     const targetUrl = corsProxy
-      ? `${corsProxy.replace(/\/+$/, '')}/${request.url}`
+      ? `${corsProxy}${corsProxy.endsWith('?') || corsProxy.endsWith('=') ? '' : '/'}${request.url}`
       : request.url
 
     const response = await fetch(targetUrl, {
