@@ -4,6 +4,7 @@ import { Clock, Lightbulb, FileText, Trash2 } from 'lucide-react'
 import { Card, Badge } from '@/components/ui'
 import { useHistoryStore } from '@/stores/useHistoryStore'
 import { useTranslation } from '@/i18n'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type { QuizType } from '@/types'
 
 function getScoreColor(score: number): string {
@@ -33,6 +34,7 @@ export default function HistoryPage() {
   const [filterType, setFilterType] = useState<QuizType | 'all'>('all')
   const [filterLang, setFilterLang] = useState<string>('all')
   const { t } = useTranslation()
+  const isMobile = useMediaQuery('(max-width: 768px)')
 
   const uniqueTypes = useMemo(() => {
     const set = new Set<QuizType>()
@@ -59,7 +61,7 @@ export default function HistoryPage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      style={{ padding: 32, maxWidth: 900, margin: '0 auto' }}
+      style={{ padding: isMobile ? 16 : 32, maxWidth: 900, margin: '0 auto' }}
     >
       <h1
         style={{

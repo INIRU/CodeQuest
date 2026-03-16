@@ -15,6 +15,7 @@ import { useQuizStore } from '@/stores/useQuizStore'
 import { useHistoryStore } from '@/stores/useHistoryStore'
 import { gradeQuiz, calculateFinalScore } from '@/services/quiz-generator'
 import { useTranslation } from '@/i18n'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type {
   Quiz,
   ExplainQuiz,
@@ -134,6 +135,8 @@ export default function QuizPage() {
   const prevQuiz = useQuizStore((s) => s.prevQuiz)
   const goToQuiz = useQuizStore((s) => s.goToQuiz)
 
+  const isMobile = useMediaQuery('(max-width: 768px)')
+
   const isSeries = quizSeries.length > 1
   const isLastInSeries = isSeries && currentIndex === quizSeries.length - 1
   const isFirstInSeries = isSeries && currentIndex === 0
@@ -250,7 +253,7 @@ export default function QuizPage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      style={{ padding: 32, maxWidth: 1200, margin: '0 auto' }}
+      style={{ padding: isMobile ? 16 : 32, maxWidth: 1200, margin: '0 auto' }}
     >
       {/* Series progress indicator */}
       {isSeries && (
@@ -308,7 +311,7 @@ export default function QuizPage() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 24 }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 24 }}>
         {/* Left panel */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Header */}
@@ -553,7 +556,7 @@ export default function QuizPage() {
         </div>
 
         {/* Right panel */}
-        <div style={{ width: 288, flexShrink: 0 }}>
+        <div style={isMobile ? { width: '100%' } : { width: 288, flexShrink: 0 }}>
           <HintPanel quiz={currentQuiz} />
         </div>
       </div>

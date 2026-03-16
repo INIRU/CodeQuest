@@ -5,6 +5,7 @@ import { AlertTriangle, Sparkles } from 'lucide-react'
 import { Button, Card } from '@/components/ui'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { useTranslation } from '@/i18n'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 const MAX_DISPLAY_LINES = 1000
 const TRUNCATE_TO = 500
@@ -61,6 +62,7 @@ export default function CodeViewer({
   const editorRef = useRef<monacoNs.editor.IStandaloneCodeEditor | null>(null)
   const [selectedText, setSelectedText] = useState('')
   const { t } = useTranslation()
+  const isMobile = useMediaQuery('(max-width: 768px)')
 
   const lineCount = code.split('\n').length
   const isTruncated = lineCount > MAX_DISPLAY_LINES
@@ -113,7 +115,7 @@ export default function CodeViewer({
           border: '1px solid var(--border)',
           borderRadius: 12,
           overflow: 'hidden',
-          minHeight: 400,
+          minHeight: isMobile ? 250 : 400,
         }}
       >
         <Editor
@@ -126,7 +128,7 @@ export default function CodeViewer({
             readOnly: true,
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
-            fontSize: 13,
+            fontSize: isMobile ? 12 : 13,
             fontFamily: 'var(--font-mono)',
             lineNumbers: 'on',
             renderLineHighlight: 'line',

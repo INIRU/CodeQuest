@@ -5,6 +5,7 @@ import { Button, Card } from '@/components/ui'
 import { useHistoryStore } from '@/stores/useHistoryStore'
 import { useQuizStore } from '@/stores/useQuizStore'
 import { useTranslation } from '@/i18n'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import QuickQuizCard from '@/components/dashboard/QuickQuizCard'
 
 function getScoreColor(score: number): string {
@@ -19,6 +20,7 @@ export default function DashboardPage() {
   const getStats = useHistoryStore((s) => s.getStats)
   const stats = getStats()
   const { t } = useTranslation()
+  const isMobile = useMediaQuery('(max-width: 768px)')
 
   // Resume quiz detection
   const currentQuiz = useQuizStore((s) => s.currentQuiz)
@@ -48,7 +50,7 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         style={{
-          padding: 32,
+          padding: isMobile ? 16 : 32,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -145,7 +147,7 @@ export default function DashboardPage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      style={{ padding: 32, maxWidth: 1200, margin: '0 auto' }}
+      style={{ padding: isMobile ? 16 : 32, maxWidth: 1200, margin: '0 auto' }}
     >
       <h1
         style={{
@@ -258,7 +260,7 @@ export default function DashboardPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
           gap: 16,
           marginBottom: 24,
         }}
@@ -375,7 +377,7 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24 }}>
         {/* Language breakdown */}
         <Card>
           <h2

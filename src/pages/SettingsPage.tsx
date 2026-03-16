@@ -5,11 +5,13 @@ import SyncSettings from '@/components/settings/SyncSettings'
 import LanguageFilterSettings from '@/components/settings/LanguageFilterSettings'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { useTranslation } from '@/i18n'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 export default function SettingsPage() {
   const language = useSettingsStore((s) => s.language)
   const setLanguage = useSettingsStore((s) => s.setLanguage)
   const { t } = useTranslation()
+  const isMobile = useMediaQuery('(max-width: 768px)')
 
   return (
     <motion.div
@@ -19,10 +21,10 @@ export default function SettingsPage() {
       style={{
         maxWidth: 672,
         margin: '0 auto',
-        padding: 32,
+        padding: isMobile ? 16 : 32,
         display: 'flex',
         flexDirection: 'column',
-        gap: 32,
+        gap: isMobile ? 24 : 32,
       }}
     >
       <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)', margin: 0 }}>

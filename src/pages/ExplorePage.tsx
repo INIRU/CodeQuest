@@ -12,6 +12,7 @@ import QuizGenerateModal from '@/components/github/QuizGenerateModal'
 import type { MultiFileEntry } from '@/components/github/QuizGenerateModal'
 import { RepoUrlInput } from '@/components/github/RepoUrlInput'
 import { useTranslation } from '@/i18n'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type { GitHubRepo, GitHubTreeItem } from '@/types'
 
 const LANGUAGES = [
@@ -51,6 +52,9 @@ export default function ExplorePage() {
   const [quizModalOpen, setQuizModalOpen] = useState(false)
   const [quizCode, setQuizCode] = useState('')
   const [urlLoading, setUrlLoading] = useState(false)
+
+  const isMobile = useMediaQuery('(max-width: 768px)')
+  const [mobileShowCode, setMobileShowCode] = useState(false)
 
   // Multi-select state
   const [multiSelectMode, setMultiSelectMode] = useState(false)
@@ -120,6 +124,7 @@ export default function ExplorePage() {
     setSelectedFilePath(path)
     setFileLoading(true)
     setFileError(null)
+    setMobileShowCode(true)
     try {
       const [owner, repoName] = selectedRepo.full_name.split('/')
       const content = await fetchFileContent(owner, repoName, path, githubPat || undefined)
@@ -138,6 +143,13 @@ export default function ExplorePage() {
     setFileContent(null)
     setMultiSelectMode(false)
     setSelectedFiles(new Set())
+    setMobileShowCode(false)
+  }
+
+  function handleMobileBack() {
+    setMobileShowCode(false)
+    setSelectedFilePath(null)
+    setFileContent(null)
   }
 
   function toggleLanguage(lang: string) {
@@ -219,7 +231,7 @@ export default function ExplorePage() {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      style={{ padding: 32, height: '100vh', display: 'flex', flexDirection: 'column' }}
+      style={{ padding: isMobile ? 16 : 32, height: '100vh', display: 'flex', flexDirection: 'column' }}
     >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -263,13 +275,13 @@ export default function ExplorePage() {
       )}
 
       {/* Main content */}
-      <div style={{ display: 'flex', flex: 1, gap: 20, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flex: 1, gap: isMobile ? 0 : 20, overflow: 'hidden' }}>
         {/* Left sidebar */}
         <div
           style={{
-            width: 288,
-            minWidth: 288,
-            display: 'flex',
+            width: isMobile ? '100%' : 288,
+            minWidth: isMobile ? undefined : 288,
+            display: isMobile && mobileShowCode ? 'none' : 'flex',
             flexDirection: 'column',
             gap: 8,
             overflowY: 'auto',
@@ -390,7 +402,15 @@ export default function ExplorePage() {
         </div>
 
         {/* Right main area */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ flex: 1, display: isMobile && !mobileShowCode ? 'none' : 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {isMobile && mobileShowCode && (
+            <div style={{ marginBottom: 8 }}>
+              <Button variant="ghost" size="sm" onClick={handleMobileBack}>
+                <ArrowLeft size={16} />
+                {t('common.back')}
+              </Button>
+            </div>
+          )}
           {selectedRepo && selectedFilePath && (
             <>
               {fileLoading && (
@@ -409,7 +429,7 @@ export default function ExplorePage() {
               )}
             </>
           )}
-          {selectedRepo && !selectedFilePath && (
+          {selectedRepo && !selectedFilePath && !isMobile && (
             <div
               style={{
                 flex: 1,
@@ -423,7 +443,7 @@ export default function ExplorePage() {
               </p>
             </div>
           )}
-          {!selectedRepo && (
+          {!selectedRepo && !isMobile && (
             <div
               style={{
                 flex: 1,
