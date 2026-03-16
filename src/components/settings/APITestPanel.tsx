@@ -79,16 +79,24 @@ export default function APITestPanel() {
       setResponseTime(elapsed)
 
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      // Safari: "Load failed", Chrome: "Failed to fetch", Firefox: "NetworkError"
+
+      // Detect specific error types
+      const isMixedContent = builtRequest.url.startsWith('http:') && window.location.protocol === 'https:'
       const isNetworkError = err instanceof TypeError && (
         msg === 'Failed to fetch' ||
         msg === 'Load failed' ||
         msg.includes('NetworkError') ||
         msg.includes('Network request failed')
       )
-      if (isNetworkError) {
+
+      if (isMixedContent && isNetworkError) {
+        setIsCorsError(false)
+        setError('Mixed Content: HTTPS page cannot request HTTP API. Your API server needs HTTPS, or use an HTTPS proxy.')
+      } else if (isNetworkError) {
         setIsCorsError(true)
         setError(t('settings.corsError'))
+      } else if (msg.includes('AbortError') || msg.includes('aborted')) {
+        setError('Request timed out. The API server may be slow or unreachable.')
       } else {
         setError(msg)
       }

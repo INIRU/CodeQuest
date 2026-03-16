@@ -90,15 +90,29 @@ export async function callAI(
       ? `${corsProxy}${corsProxy.endsWith('?') || corsProxy.endsWith('=') ? '' : '/'}${request.url}`
       : request.url
 
-    const response = await fetch(targetUrl, {
-      method: request.method,
-      headers: request.headers,
-      body: request.body,
-      signal: controller.signal,
-    })
+    let response: Response
+    try {
+      response = await fetch(targetUrl, {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+        signal: controller.signal,
+      })
+    } catch (fetchErr) {
+      const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr)
+      const isMixed = request.url.startsWith('http:') && typeof window !== 'undefined' && window.location.protocol === 'https:'
+      if (isMixed) {
+        throw new Error('Mixed Content: HTTPS page cannot request HTTP API. Your API server needs HTTPS, or use an HTTPS proxy.')
+      }
+      if (msg === 'Failed to fetch' || msg === 'Load failed' || msg.includes('NetworkError')) {
+        throw new Error('Network error: API unreachable. Check the URL, CORS settings, or use a CORS proxy.')
+      }
+      throw fetchErr
+    }
 
     if (!response.ok) {
-      throw new Error(`AI API error: ${response.status} ${response.statusText}`)
+      const body = await response.text().catch(() => '')
+      throw new Error(`AI API error ${response.status}: ${body.slice(0, 200) || response.statusText}`)
     }
 
     const raw: unknown = await response.json()
