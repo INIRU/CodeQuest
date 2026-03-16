@@ -7,6 +7,21 @@ export interface GlossaryTerm {
   definition: string
 }
 
+export interface LessonSlide {
+  title: string
+  explanation: string
+  codeExample?: string
+  codeLanguage?: string
+  keyPoints: string[]
+  glossary?: GlossaryTerm[]
+}
+
+export interface Lesson {
+  stepTitle: string
+  slides: LessonSlide[]
+  practicePrompt: string
+}
+
 export interface LearningStep {
   id: string
   title: string
@@ -123,6 +138,88 @@ Create a structured curriculum with practical steps, each with topics and homewo
       glossary: Array.isArray(step.glossary) ? step.glossary : [],
     } as LearningStep)),
     createdAt: new Date().toISOString(),
+  }
+}
+
+const LESSON_SCHEMA = JSON.stringify(
+  {
+    stepTitle: 'Step title',
+    slides: [
+      {
+        title: 'Slide title',
+        explanation: 'Clear, beginner-friendly explanation of this concept',
+        codeExample: 'code example demonstrating the concept',
+        codeLanguage: 'python',
+        keyPoints: ['Key takeaway 1', 'Key takeaway 2'],
+        glossary: [
+          { term: 'Technical term', definition: 'Simple explanation' },
+        ],
+      },
+    ],
+    practicePrompt: 'Summary of what to practice after reading the lesson',
+  },
+  null,
+  2,
+)
+
+export async function generateLesson(
+  step: LearningStep,
+): Promise<Lesson> {
+  const { presets, activePresetKey, language: uiLang } = useSettingsStore.getState()
+  const preset = presets[activePresetKey]
+  if (!preset) {
+    throw new Error(`No AI preset found for key "${activePresetKey}"`)
+  }
+
+  const langInstruction =
+    uiLang === 'ko'
+      ? 'All text fields MUST be written in Korean.'
+      : 'All text fields MUST be written in English.'
+
+  const topicList = step.topics.join(', ')
+
+  const systemMessage: Message = {
+    role: 'system',
+    content: `You are creating an educational lesson. Explain concepts step by step as if teaching someone who has never seen this before. Start from the basics. Use simple analogies. Show code examples that are easy to understand. Build complexity gradually.
+
+${langInstruction}
+
+You MUST respond with ONLY a valid JSON object. Do NOT include any text before or after the JSON. Do NOT wrap it in markdown code blocks.
+
+Create a lesson with 3-5 slides. Each slide should explain ONE concept clearly. Code examples should build on each other progressively. Include glossary terms for technical words that beginners might not know.
+
+The JSON must match this exact schema:
+${LESSON_SCHEMA}`,
+  }
+
+  const userMessage: Message = {
+    role: 'user',
+    content: `Create an educational lesson for this learning step:
+
+Title: "${step.title}"
+Description: ${step.description}
+Topics: ${topicList}
+Homework context: ${step.homework}
+
+Create 3-5 explanation slides that teach these concepts from scratch. Each slide should have a clear title, explanation with analogies, a code example, key points, and glossary terms for technical words.
+
+End with a practicePrompt that summarizes what the student should practice after reading. ${uiLang === 'ko' ? 'All text must be in Korean.' : ''}`,
+  }
+
+  const { text } = await callAI(preset, [systemMessage, userMessage])
+  const parsed = parseJsonResponse<Lesson>(text)
+
+  return {
+    stepTitle: parsed.stepTitle || step.title,
+    slides: Array.isArray(parsed.slides) ? parsed.slides.map((slide: any) => ({
+      title: slide.title || '',
+      explanation: slide.explanation || '',
+      codeExample: slide.codeExample || undefined,
+      codeLanguage: slide.codeLanguage || undefined,
+      keyPoints: Array.isArray(slide.keyPoints) ? slide.keyPoints : [],
+      glossary: Array.isArray(slide.glossary) ? slide.glossary : undefined,
+    })) : [],
+    practicePrompt: parsed.practicePrompt || '',
   }
 }
 
