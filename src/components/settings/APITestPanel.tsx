@@ -55,7 +55,16 @@ export default function APITestPanel() {
       setResponseTime(elapsed)
       setStatusCode(response.status)
 
-      const json: unknown = await response.json()
+      const responseText = await response.text()
+      let json: unknown
+      try {
+        json = JSON.parse(responseText)
+      } catch {
+        // Response is not JSON — show raw text
+        setRawResponse(responseText)
+        setError(`Response is not valid JSON (status ${response.status})`)
+        return
+      }
       setRawResponse(json)
 
       // Auto-detect response path
