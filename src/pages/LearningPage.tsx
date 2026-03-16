@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import * as Tabs from '@radix-ui/react-tabs'
 import { GraduationCap, Target, ExternalLink, Trash2 } from 'lucide-react'
-import { Button, Card } from '@/components/ui'
+import { Button, Card, ConfirmModal } from '@/components/ui'
 import { useTranslation } from '@/i18n'
 import { useLearningStore } from '@/stores/useLearningStore'
 import { generateLearningPlanFromGoal, generateLearningPlanFromUrl } from '@/services/learning'
@@ -16,6 +16,8 @@ export default function LearningPage() {
     useLearningStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
   const activePlan = plans.find((p) => p.id === activePlanId) ?? null
 
@@ -331,9 +333,8 @@ export default function LearningPage() {
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation()
-                              if (window.confirm(t('learn.deletePlan'))) {
-                                deletePlan(plan.id)
-                              }
+                              setDeleteTargetId(plan.id)
+                              setConfirmOpen(true)
                             }}
                           >
                             <Trash2 size={16} />
@@ -348,6 +349,21 @@ export default function LearningPage() {
           </div>
         </motion.div>
       )}
+      <ConfirmModal
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('history.delete')}
+        description={t('learn.deletePlan')}
+        confirmLabel={t('common.confirm')}
+        cancelLabel={t('common.cancel')}
+        variant="danger"
+        onConfirm={() => {
+          if (deleteTargetId) {
+            deletePlan(deleteTargetId)
+            setDeleteTargetId(null)
+          }
+        }}
+      />
     </div>
   )
 }

@@ -205,6 +205,7 @@ const ko = {
     myPlans: '내 학습 계획',
     noPlan: '아직 학습 계획이 없습니다. 목표를 설정하거나 URL을 입력해보세요!',
     deletePlan: '이 학습 계획을 삭제하시겠습니까?',
+    glossary: '용어 사전',
   },
   common: {
     back: '뒤로',
@@ -213,6 +214,8 @@ const ko = {
     error: '오류',
     url: 'URL',
     header: '헤더',
+    confirm: '확인',
+    cancel: '취소',
   },
 } as const
 

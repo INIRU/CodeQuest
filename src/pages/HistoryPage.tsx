@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Clock, Lightbulb, FileText, Trash2 } from 'lucide-react'
-import { Card, Badge } from '@/components/ui'
+import { Card, Badge, ConfirmModal } from '@/components/ui'
 import { useHistoryStore } from '@/stores/useHistoryStore'
 import { useTranslation } from '@/i18n'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -33,6 +33,8 @@ export default function HistoryPage() {
   const deleteQuiz = useHistoryStore((s) => s.deleteQuiz)
   const [filterType, setFilterType] = useState<QuizType | 'all'>('all')
   const [filterLang, setFilterLang] = useState<string>('all')
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const { t } = useTranslation()
   const isMobile = useMediaQuery('(max-width: 768px)')
 
@@ -241,9 +243,8 @@ export default function HistoryPage() {
                   </div>
                   <button
                     onClick={() => {
-                      if (window.confirm(t('history.deleteConfirm'))) {
-                        deleteQuiz(q.id)
-                      }
+                      setDeleteTargetId(q.id)
+                      setConfirmOpen(true)
                     }}
                     title={t('history.delete')}
                     style={{
@@ -275,6 +276,21 @@ export default function HistoryPage() {
           ))}
         </div>
       )}
+      <ConfirmModal
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('history.delete')}
+        description={t('history.deleteConfirm')}
+        confirmLabel={t('common.confirm')}
+        cancelLabel={t('common.cancel')}
+        variant="danger"
+        onConfirm={() => {
+          if (deleteTargetId) {
+            deleteQuiz(deleteTargetId)
+            setDeleteTargetId(null)
+          }
+        }}
+      />
     </motion.div>
   )
 }

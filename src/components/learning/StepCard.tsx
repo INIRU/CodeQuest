@@ -182,6 +182,52 @@ export default function StepCard({ step, index, onComplete, onStartHomework, hom
                 </div>
               </div>
 
+              {step.glossary && step.glossary.length > 0 && (
+                <div>
+                  <div
+                    style={{
+                      borderTop: '1px solid var(--border)',
+                      paddingTop: 14,
+                      marginBottom: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: 'var(--text-sub)',
+                    }}
+                  >
+                    <BookOpen size={14} />
+                    {t('learn.glossary')}
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 6,
+                      fontSize: 13,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {step.glossary.map((item, gi) => (
+                      <div key={gi}>
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            color: 'var(--primary)',
+                          }}
+                        >
+                          {item.term}
+                        </span>
+                        <span style={{ color: 'var(--text-sub)' }}>
+                          {' '}- {item.definition}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: 'flex', gap: 8 }}>
                 <Button
                   variant="primary"

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { BookOpen, Trash2, GraduationCap } from 'lucide-react'
-import { Button, Card } from '@/components/ui'
+import { Button, Card, ConfirmModal } from '@/components/ui'
 import { useTranslation } from '@/i18n'
 import type { LearningPlan, LearningStep, HomeworkQuiz } from '@/services/learning'
 import { generateHomeworkQuiz } from '@/services/learning'
@@ -27,6 +27,7 @@ export default function LearningPlanView({
   const [quizError, setQuizError] = useState<string | null>(null)
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({})
   const [showAnswers, setShowAnswers] = useState<Record<number, boolean>>({})
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const completedCount = plan.steps.filter((s) => s.completed).length
   const totalSteps = plan.steps.length
@@ -50,9 +51,7 @@ export default function LearningPlanView({
   }
 
   const handleDeleteConfirm = () => {
-    if (window.confirm(t('learn.deletePlan'))) {
-      onDelete()
-    }
+    setConfirmOpen(true)
   }
 
   return (
@@ -131,6 +130,17 @@ export default function LearningPlanView({
       </div>
 
       {/* Homework Quiz Modal / Section */}
+      <ConfirmModal
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('history.delete')}
+        description={t('learn.deletePlan')}
+        confirmLabel={t('common.confirm')}
+        cancelLabel={t('common.cancel')}
+        variant="danger"
+        onConfirm={onDelete}
+      />
+
       {quizStep && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}

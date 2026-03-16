@@ -2,6 +2,11 @@ import { useSettingsStore } from '@/stores/useSettingsStore'
 import { callAI } from './ai'
 import type { Message } from './ai'
 
+export interface GlossaryTerm {
+  term: string
+  definition: string
+}
+
 export interface LearningStep {
   id: string
   title: string
@@ -10,6 +15,7 @@ export interface LearningStep {
   homework: string
   estimatedMinutes: number
   completed: boolean
+  glossary: GlossaryTerm[]
 }
 
 export interface LearningPlan {
@@ -104,6 +110,9 @@ const PLAN_SCHEMA = JSON.stringify(
         topics: ['topic1', 'topic2'],
         homework: 'A practical assignment for this step',
         estimatedMinutes: 30,
+        glossary: [
+          { term: 'Technical term', definition: 'Simple explanation for beginners' },
+        ],
       },
     ],
   },
@@ -148,6 +157,8 @@ ${langInstruction}
 
 Create a comprehensive, step-by-step learning plan for a student. The plan should be practical and actionable, with clear homework assignments at each step. Include 5-10 steps depending on the scope of the goal.
 
+IMPORTANT: For each step, include a 'glossary' array with definitions of technical terms that beginners might not know. Explain each term in simple, plain language as if explaining to someone who has never programmed before. Include at least 3-5 terms per step.
+
 The JSON must match this exact schema:
 ${PLAN_SCHEMA}`,
   }
@@ -169,11 +180,12 @@ Create a structured curriculum with practical steps, each with topics and homewo
     title: parsed.title,
     description: parsed.description,
     goal,
-    steps: parsed.steps.map((step) => ({
+    steps: parsed.steps.map((step: any) => ({
       ...step,
       id: crypto.randomUUID(),
       completed: false,
-    })),
+      glossary: Array.isArray(step.glossary) ? step.glossary : [],
+    } as LearningStep)),
     createdAt: new Date().toISOString(),
   }
 }
@@ -203,6 +215,8 @@ Based on a documentation URL, create a comprehensive study plan. Infer the conte
 
 Include 5-10 steps depending on the scope of the documentation. Each step should build on the previous one.
 
+IMPORTANT: For each step, include a 'glossary' array with definitions of technical terms that beginners might not know. Explain each term in simple, plain language as if explaining to someone who has never programmed before. Include at least 3-5 terms per step.
+
 The JSON must match this exact schema:
 ${PLAN_SCHEMA}`,
   }
@@ -224,11 +238,12 @@ Create a study plan that covers the key topics from this documentation. Infer th
     title: parsed.title,
     description: parsed.description,
     goal: url,
-    steps: parsed.steps.map((step) => ({
+    steps: parsed.steps.map((step: any) => ({
       ...step,
       id: crypto.randomUUID(),
       completed: false,
-    })),
+      glossary: Array.isArray(step.glossary) ? step.glossary : [],
+    } as LearningStep)),
     createdAt: new Date().toISOString(),
   }
 }

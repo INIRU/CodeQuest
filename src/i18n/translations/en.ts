@@ -215,6 +215,7 @@ const en = {
     myPlans: 'My Plans',
     noPlan: 'No study plans yet. Set a goal or paste a URL to get started!',
     deletePlan: 'Delete this plan?',
+    glossary: 'Glossary',
   },
   // Common
   common: {
@@ -224,6 +225,8 @@ const en = {
     error: 'Error',
     url: 'URL',
     header: 'Header',
+    confirm: 'Confirm',
+    cancel: 'Cancel',
   },
 } as const
 
