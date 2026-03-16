@@ -5,6 +5,7 @@ const en = {
     explore: 'Explore',
     myRepos: 'My Repos',
     history: 'History',
+    learn: 'Learn',
     settings: 'Settings',
   },
   // Dashboard
@@ -191,6 +192,29 @@ const en = {
   myReposPage: {
     searchPlaceholder: 'Search repositories...',
     noResults: 'No repositories match your search.',
+  },
+  // Learning
+  learn: {
+    title: 'Learning Mode',
+    goalTab: 'Set a Goal',
+    urlTab: 'From URL',
+    goalPlaceholder: 'What do you want to learn? e.g., "I want to become a backend developer" or "Learn React hooks"',
+    urlPlaceholder: 'Paste a documentation URL...',
+    urlContext: 'Additional context (optional)',
+    urlContextPlaceholder: 'e.g., Focus on authentication section...',
+    skillLevel: 'Current Skill Level',
+    createPlan: 'Create Study Plan',
+    analyzingUrl: 'Analyzing documentation...',
+    generatingPlan: 'Creating your study plan...',
+    stepProgress: '{completed} / {total} steps completed',
+    startHomework: 'Start Homework',
+    markComplete: 'Mark Complete',
+    estimatedTime: '{minutes} min',
+    topics: 'Topics',
+    homework: 'Homework',
+    myPlans: 'My Plans',
+    noPlan: 'No study plans yet. Set a goal or paste a URL to get started!',
+    deletePlan: 'Delete this plan?',
   },
   // Common
   common: {

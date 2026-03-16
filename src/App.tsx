@@ -7,6 +7,7 @@ import MyReposPage from '@/pages/MyReposPage'
 import QuizPage from '@/pages/QuizPage'
 import HistoryPage from '@/pages/HistoryPage'
 import SettingsPage from '@/pages/SettingsPage'
+import LearningPage from '@/pages/LearningPage'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { useAutoSync } from '@/hooks/useAutoSync'
 
@@ -32,6 +33,7 @@ function App() {
           <Route path="/my-repos" element={<MyReposPage />} />
           <Route path="/quiz/:id" element={<QuizPage />} />
           <Route path="/history" element={<HistoryPage />} />
+          <Route path="/learn" element={<LearningPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Routes>
