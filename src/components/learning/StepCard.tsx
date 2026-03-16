@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CheckCircle,
@@ -16,13 +17,12 @@ interface StepCardProps {
   step: LearningStep
   index: number
   onComplete: () => void
-  onStartHomework: () => void
-  homeworkLoading?: boolean
 }
 
-export default function StepCard({ step, index, onComplete, onStartHomework, homeworkLoading }: StepCardProps) {
+export default function StepCard({ step, index, onComplete }: StepCardProps) {
   const [expanded, setExpanded] = useState(false)
   const { t } = useTranslation()
+  const navigate = useNavigate()
 
   return (
     <motion.div
@@ -232,11 +232,9 @@ export default function StepCard({ step, index, onComplete, onStartHomework, hom
                 <Button
                   variant="primary"
                   size="sm"
-                  loading={homeworkLoading}
-                  disabled={homeworkLoading}
                   onClick={(e) => {
                     e.stopPropagation()
-                    if (!homeworkLoading) onStartHomework()
+                    navigate(`/learn/homework/${step.id}`)
                   }}
                 >
                   {t('learn.startHomework')}

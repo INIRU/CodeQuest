@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { BookOpen, Trash2, GraduationCap } from 'lucide-react'
+import { Trash2, GraduationCap } from 'lucide-react'
 import { Button, Card, ConfirmModal } from '@/components/ui'
 import { useTranslation } from '@/i18n'
-import type { LearningPlan, LearningStep, HomeworkQuiz } from '@/services/learning'
-import { generateHomeworkQuiz } from '@/services/learning'
-import { useSettingsStore } from '@/stores/useSettingsStore'
+import type { LearningPlan } from '@/services/learning'
 import StepCard from './StepCard'
 
 interface LearningPlanViewProps {
@@ -19,36 +17,12 @@ export default function LearningPlanView({
   onCompleteStep,
   onDelete,
 }: LearningPlanViewProps) {
-  const { t, language } = useTranslation()
-  const uiLang = useSettingsStore((s) => s.language)
-  const [quizStep, setQuizStep] = useState<LearningStep | null>(null)
-  const [quizzes, setQuizzes] = useState<HomeworkQuiz[]>([])
-  const [quizLoading, setQuizLoading] = useState(false)
-  const [quizError, setQuizError] = useState<string | null>(null)
-  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({})
-  const [showAnswers, setShowAnswers] = useState<Record<number, boolean>>({})
+  const { t } = useTranslation()
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const completedCount = plan.steps.filter((s) => s.completed).length
   const totalSteps = plan.steps.length
   const progressPercent = totalSteps > 0 ? (completedCount / totalSteps) * 100 : 0
-
-  const handleStartHomework = async (step: LearningStep) => {
-    setQuizStep(step)
-    setQuizzes([])
-    setQuizError(null)
-    setUserAnswers({})
-    setShowAnswers({})
-    setQuizLoading(true)
-    try {
-      const result = await generateHomeworkQuiz(step, uiLang)
-      setQuizzes(result)
-    } catch (err) {
-      setQuizError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setQuizLoading(false)
-    }
-  }
 
   const handleDeleteConfirm = () => {
     setConfirmOpen(true)
@@ -123,13 +97,11 @@ export default function LearningPlanView({
             step={step}
             index={index}
             onComplete={() => onCompleteStep(step.id)}
-            onStartHomework={() => handleStartHomework(step)}
-            homeworkLoading={quizLoading && quizStep?.id === step.id}
           />
         ))}
       </div>
 
-      {/* Homework Quiz Modal / Section */}
+      {/* Delete Confirm Modal */}
       <ConfirmModal
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
@@ -140,172 +112,6 @@ export default function LearningPlanView({
         variant="danger"
         onConfirm={onDelete}
       />
-
-      {quizStep && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Card style={{ border: '1px solid var(--primary)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-              <BookOpen size={20} style={{ color: 'var(--primary)' }} />
-              <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
-                {t('learn.homework')} - {quizStep.title}
-              </h3>
-            </div>
-
-            {quizLoading && (
-              <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
-                {t('common.loading')}
-              </div>
-            )}
-
-            {quizError && (
-              <div
-                style={{
-                  padding: 16,
-                  borderRadius: 10,
-                  backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                  color: 'var(--error)',
-                  fontSize: 14,
-                }}
-              >
-                {quizError}
-              </div>
-            )}
-
-            {quizzes.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                {quizzes.map((quiz, qi) => (
-                  <div
-                    key={qi}
-                    style={{
-                      padding: 16,
-                      borderRadius: 12,
-                      backgroundColor: 'var(--surface)',
-                      border: '1px solid var(--border)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: 'var(--text)',
-                        marginBottom: 12,
-                      }}
-                    >
-                      {qi + 1}. {quiz.question}
-                    </div>
-
-                    {quiz.type === 'multiple-choice' && quiz.options && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {quiz.options.map((option, oi) => (
-                          <label
-                            key={oi}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 8,
-                              padding: '8px 12px',
-                              borderRadius: 8,
-                              cursor: 'pointer',
-                              fontSize: 14,
-                              color: 'var(--text)',
-                              backgroundColor:
-                                userAnswers[qi] === option ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
-                              border: `1px solid ${userAnswers[qi] === option ? 'var(--primary)' : 'var(--border)'}`,
-                              transition: 'all 0.15s',
-                            }}
-                          >
-                            <input
-                              type="radio"
-                              name={`quiz-${qi}`}
-                              value={option}
-                              checked={userAnswers[qi] === option}
-                              onChange={() =>
-                                setUserAnswers((prev) => ({ ...prev, [qi]: option }))
-                              }
-                              style={{ accentColor: 'var(--primary)' }}
-                            />
-                            {option}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-
-                    {(quiz.type === 'short-answer' || quiz.type === 'code') && (
-                      <textarea
-                        value={userAnswers[qi] || ''}
-                        onChange={(e) =>
-                          setUserAnswers((prev) => ({ ...prev, [qi]: e.target.value }))
-                        }
-                        rows={quiz.type === 'code' ? 4 : 2}
-                        style={{
-                          width: '100%',
-                          padding: '10px 14px',
-                          fontSize: 14,
-                          fontFamily: quiz.type === 'code' ? 'monospace' : 'inherit',
-                          borderRadius: 10,
-                          border: '1px solid var(--border)',
-                          backgroundColor: 'var(--glass)',
-                          color: 'var(--text)',
-                          outline: 'none',
-                          resize: 'vertical',
-                          boxSizing: 'border-box',
-                        }}
-                      />
-                    )}
-
-                    <div style={{ marginTop: 10 }}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setShowAnswers((prev) => ({ ...prev, [qi]: !prev[qi] }))
-                        }
-                      >
-                        {showAnswers[qi] ? t('quiz.viewCorrectAnswer') : t('quiz.viewCorrectAnswer')}
-                      </Button>
-
-                      {showAnswers[qi] && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          transition={{ duration: 0.2 }}
-                          style={{
-                            marginTop: 8,
-                            padding: 12,
-                            borderRadius: 8,
-                            backgroundColor: 'rgba(5, 150, 105, 0.08)',
-                            border: '1px solid rgba(5, 150, 105, 0.2)',
-                          }}
-                        >
-                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--success)', marginBottom: 4 }}>
-                            {language === 'ko' ? '정답' : 'Answer'}
-                          </div>
-                          <div style={{ fontSize: 14, color: 'var(--text)', marginBottom: 8 }}>
-                            {quiz.answer}
-                          </div>
-                          <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.5 }}>
-                            {quiz.explanation}
-                          </div>
-                        </motion.div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
-              <Button variant="secondary" size="sm" onClick={() => setQuizStep(null)}>
-                {t('common.back')}
-              </Button>
-            </div>
-          </Card>
-        </motion.div>
-      )}
     </div>
   )
 }

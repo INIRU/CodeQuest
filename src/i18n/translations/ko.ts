@@ -206,6 +206,13 @@ const ko = {
     noPlan: '아직 학습 계획이 없습니다. 목표를 설정하거나 URL을 입력해보세요!',
     deletePlan: '이 학습 계획을 삭제하시겠습니까?',
     glossary: '용어 사전',
+    homeworkTitle: '숙제',
+    homeworkFor: '숙제: {step}',
+    showAnswer: '정답 보기',
+    hideAnswer: '정답 숨기기',
+    completeAndReturn: '완료하고 돌아가기',
+    generating: '숙제 문제를 생성하고 있습니다...',
+    yourAnswer: '답변 입력',
   },
   common: {
     back: '뒤로',

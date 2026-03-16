@@ -216,6 +216,13 @@ const en = {
     noPlan: 'No study plans yet. Set a goal or paste a URL to get started!',
     deletePlan: 'Delete this plan?',
     glossary: 'Glossary',
+    homeworkTitle: 'Homework',
+    homeworkFor: 'Homework for: {step}',
+    showAnswer: 'Show Answer',
+    hideAnswer: 'Hide Answer',
+    completeAndReturn: 'Complete Step & Return',
+    generating: 'Generating homework questions...',
+    yourAnswer: 'Your answer',
   },
   // Common
   common: {

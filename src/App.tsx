@@ -8,6 +8,7 @@ import QuizPage from '@/pages/QuizPage'
 import HistoryPage from '@/pages/HistoryPage'
 import SettingsPage from '@/pages/SettingsPage'
 import LearningPage from '@/pages/LearningPage'
+import HomeworkPage from '@/pages/HomeworkPage'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { useAutoSync } from '@/hooks/useAutoSync'
 
@@ -34,6 +35,7 @@ function App() {
           <Route path="/quiz/:id" element={<QuizPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/learn" element={<LearningPage />} />
+          <Route path="/learn/homework/:stepId" element={<HomeworkPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Routes>
