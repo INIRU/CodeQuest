@@ -52,9 +52,18 @@ function parseJsonResponse<T>(text: string): T {
 }
 
 function extractJsonArray<T>(text: string): T[] {
-  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
-  const raw = codeBlockMatch ? codeBlockMatch[1].trim() : text.trim()
+  const raw = text.trim()
 
+  // 1. Try parsing raw text directly first (handles JSON with code blocks inside strings)
+  try {
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) return parsed as T[]
+    return [parsed] as T[]
+  } catch {
+    // fall through
+  }
+
+  // 2. Try finding [ to ] bracket range
   const startBracket = raw.indexOf('[')
   const endBracket = raw.lastIndexOf(']')
   if (startBracket !== -1 && endBracket > startBracket) {
@@ -67,15 +76,21 @@ function extractJsonArray<T>(text: string): T[] {
     }
   }
 
-  try {
-    const parsed = JSON.parse(raw)
-    if (Array.isArray(parsed)) return parsed as T[]
-    return [parsed] as T[]
-  } catch (err) {
-    throw new Error(
-      `Failed to parse JSON array from AI response: ${err instanceof Error ? err.message : String(err)}\n\nRaw response:\n${text}`,
-    )
+  // 3. Last resort: try extracting from markdown code block
+  const codeBlockMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (codeBlockMatch) {
+    try {
+      const parsed = JSON.parse(codeBlockMatch[1].trim())
+      if (Array.isArray(parsed)) return parsed as T[]
+      return [parsed] as T[]
+    } catch {
+      // fall through
+    }
   }
+
+  throw new Error(
+    `Failed to parse JSON array from AI response.\n\nRaw response:\n${text.slice(0, 500)}`,
+  )
 }
 
 const PLAN_SCHEMA = JSON.stringify(

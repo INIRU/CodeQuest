@@ -125,6 +125,7 @@ export default function LearningPlanView({
             index={index}
             onComplete={() => onCompleteStep(step.id)}
             onStartHomework={() => handleStartHomework(step)}
+            homeworkLoading={quizLoading && quizStep?.id === step.id}
           />
         ))}
       </div>

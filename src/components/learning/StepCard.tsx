@@ -17,9 +17,10 @@ interface StepCardProps {
   index: number
   onComplete: () => void
   onStartHomework: () => void
+  homeworkLoading?: boolean
 }
 
-export default function StepCard({ step, index, onComplete, onStartHomework }: StepCardProps) {
+export default function StepCard({ step, index, onComplete, onStartHomework, homeworkLoading }: StepCardProps) {
   const [expanded, setExpanded] = useState(false)
   const { t } = useTranslation()
 
@@ -185,9 +186,11 @@ export default function StepCard({ step, index, onComplete, onStartHomework }: S
                 <Button
                   variant="primary"
                   size="sm"
+                  loading={homeworkLoading}
+                  disabled={homeworkLoading}
                   onClick={(e) => {
                     e.stopPropagation()
-                    onStartHomework()
+                    if (!homeworkLoading) onStartHomework()
                   }}
                 >
                   {t('learn.startHomework')}
