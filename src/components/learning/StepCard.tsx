@@ -8,10 +8,30 @@ import {
   ChevronDown,
   ChevronUp,
   BookOpen,
+  Loader2,
+  Code,
+  FileCode,
+  Bug,
+  Search,
+  Terminal,
 } from 'lucide-react'
 import { Button, Badge } from '@/components/ui'
 import { useTranslation } from '@/i18n'
+import { generateHomeworkFromStep } from '@/services/quick-quiz'
+import { useQuizStore } from '@/stores/useQuizStore'
 import type { LearningStep } from '@/services/learning'
+import type { QuizType } from '@/types'
+
+const QUIZ_TYPES: { type: QuizType; icon: typeof Code; labelKey: string }[] = [
+  { type: 'code', icon: Code, labelKey: 'quiz.code' },
+  { type: 'explain', icon: BookOpen, labelKey: 'quiz.explain' },
+  { type: 'fill-blank', icon: FileCode, labelKey: 'quiz.fillBlank' },
+  { type: 'bug-hunt', icon: Bug, labelKey: 'quiz.bugHunt' },
+  { type: 'code-review', icon: Search, labelKey: 'quiz.codeReview' },
+  { type: 'output-prediction', icon: Terminal, labelKey: 'quiz.output' },
+]
+
+const COUNT_OPTIONS = [1, 3, 5]
 
 interface StepCardProps {
   step: LearningStep
@@ -21,8 +41,35 @@ interface StepCardProps {
 
 export default function StepCard({ step, index, onComplete }: StepCardProps) {
   const [expanded, setExpanded] = useState(false)
+  const [selectedType, setSelectedType] = useState<QuizType>('code')
+  const [selectedCount, setSelectedCount] = useState(3)
+  const [generating, setGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { t } = useTranslation()
   const navigate = useNavigate()
+
+  const handleStartHomework = async () => {
+    setGenerating(true)
+    setError(null)
+    try {
+      const quizzes = await generateHomeworkFromStep(
+        step,
+        selectedType,
+        'intermediate',
+        selectedCount,
+      )
+      if (quizzes.length > 1) {
+        useQuizStore.getState().setQuizSeries(quizzes)
+      } else {
+        useQuizStore.getState().setCurrentQuiz(quizzes[0])
+      }
+      navigate(`/quiz/${quizzes[0].id}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   return (
     <motion.div
@@ -228,16 +275,132 @@ export default function StepCard({ step, index, onComplete }: StepCardProps) {
                 </div>
               )}
 
+              {/* Quiz Type Selector */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: 'var(--text-sub)',
+                    marginBottom: 8,
+                  }}
+                >
+                  {t('learn.quizType')}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {QUIZ_TYPES.map(({ type, icon: Icon, labelKey }) => {
+                    const isActive = selectedType === type
+                    return (
+                      <button
+                        key={type}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedType(type)
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          padding: '4px 10px',
+                          fontSize: 12,
+                          fontWeight: 500,
+                          fontFamily: 'inherit',
+                          borderRadius: 6,
+                          border: `1.5px solid ${isActive ? 'var(--primary)' : 'var(--border)'}`,
+                          backgroundColor: isActive ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                          color: isActive ? 'var(--primary)' : 'var(--text-sub)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        <Icon size={12} />
+                        {t(labelKey)}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Question Count Selector */}
+              <div>
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: 'var(--text-sub)',
+                    marginBottom: 8,
+                  }}
+                >
+                  {t('quiz.questionCount')}
+                </div>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {COUNT_OPTIONS.map((count) => {
+                    const isActive = selectedCount === count
+                    return (
+                      <button
+                        key={count}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedCount(count)
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 36,
+                          height: 28,
+                          fontSize: 13,
+                          fontWeight: 600,
+                          fontFamily: 'inherit',
+                          borderRadius: 6,
+                          border: `1.5px solid ${isActive ? 'var(--primary)' : 'var(--border)'}`,
+                          backgroundColor: isActive ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                          color: isActive ? 'var(--primary)' : 'var(--text-sub)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {count}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Error message */}
+              {error && (
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: 'var(--error)',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    backgroundColor: 'rgba(220, 38, 38, 0.06)',
+                    border: '1px solid rgba(220, 38, 38, 0.2)',
+                  }}
+                >
+                  {error}
+                </div>
+              )}
+
               <div style={{ display: 'flex', gap: 8 }}>
                 <Button
                   variant="primary"
                   size="sm"
+                  disabled={generating}
                   onClick={(e) => {
                     e.stopPropagation()
-                    navigate(`/learn/homework/${step.id}`)
+                    handleStartHomework()
                   }}
                 >
-                  {t('learn.startHomework')}
+                  {generating ? (
+                    <>
+                      <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                      {t('learn.generating')}
+                    </>
+                  ) : (
+                    t('learn.startHomework')
+                  )}
                 </Button>
                 {!step.completed && (
                   <Button
@@ -257,6 +420,13 @@ export default function StepCard({ step, index, onComplete }: StepCardProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </motion.div>
   )
 }

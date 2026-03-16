@@ -1,4 +1,5 @@
 import type { Quiz, QuizType, Difficulty } from '@/types'
+import type { LearningStep } from '@/services/learning'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { callAI } from './ai'
 import type { Message } from './ai'
@@ -253,4 +254,135 @@ Respond with only a JSON array of ${count} quiz objects. ${uiLang === 'ko' ? 'Al
     sourceRepo: 'AI Generated',
     sourceFile: topic ? `${language}/${topic}` : language,
   })) as Quiz[]
+}
+
+/**
+ * Generate homework quizzes from a learning step using the main quiz system.
+ * Creates coding quizzes (same 6 types) based on the step's topics and description.
+ */
+export async function generateHomeworkFromStep(
+  step: LearningStep,
+  quizType: QuizType,
+  difficulty: Difficulty,
+  count: number,
+): Promise<Quiz[]> {
+  const { presets, activePresetKey, language: uiLang } = useSettingsStore.getState()
+  const preset = presets[activePresetKey]
+  if (!preset) {
+    throw new Error(`No AI preset found for key "${activePresetKey}"`)
+  }
+
+  const schemaHint = SCHEMA_HINTS[quizType]
+  const langInstruction = uiLang === 'ko'
+    ? 'All text fields (question, hints, explanation, feedback) MUST be written in Korean.'
+    : 'All text fields (question, hints, explanation, feedback) MUST be written in English.'
+
+  const topicList = step.topics.join(', ')
+  const contextDesc = `Learning Step: "${step.title}"\nDescription: ${step.description}\nTopics: ${topicList}\nHomework: ${step.homework}`
+
+  if (count <= 1) {
+    const systemMessage: Message = {
+      role: 'system',
+      content: `You are a coding quiz generator for a learning platform. Based on a learning step's context, create a code snippet and generate a ${quizType} quiz that teaches the concepts described.
+${langInstruction}
+Difficulty: ${difficulty}
+The quiz should help the student practice and understand the topics covered in their learning step.
+You MUST respond with ONLY a valid JSON object matching this schema:
+${schemaHint}
+The "code" field should contain a relevant code snippet you created that demonstrates the concepts.`,
+    }
+
+    const userMessage: Message = {
+      role: 'user',
+      content: `Create a ${quizType} coding quiz (${difficulty} difficulty) based on this learning context:
+
+${contextDesc}
+
+Generate a code snippet that demonstrates these concepts and create a quiz from it.
+Respond with only the JSON quiz object. ${uiLang === 'ko' ? 'All text must be in Korean.' : ''}`,
+    }
+
+    const { text } = await callAI(preset, [systemMessage, userMessage])
+    const parsed = extractJsonFromResponse(text) as Record<string, unknown>
+
+    return [{
+      ...parsed,
+      id: crypto.randomUUID(),
+      language: detectLanguageFromTopics(step.topics),
+      sourceRepo: 'Learning Mode',
+      sourceFile: step.title,
+    } as Quiz]
+  }
+
+  const systemMessage: Message = {
+    role: 'system',
+    content: `You are a coding quiz generator for a learning platform. Based on a learning step's context, create ${count} different code snippets and generate a ${quizType} quiz from each.
+${langInstruction}
+Difficulty: ${difficulty}
+Each question should cover a different aspect of the topics and help the student practice the concepts.
+You MUST respond with ONLY a valid JSON array of ${count} quiz objects. Each object must match this schema:
+${schemaHint}
+The "code" field in each object should contain a relevant code snippet you created.`,
+  }
+
+  const userMessage: Message = {
+    role: 'user',
+    content: `Create ${count} different ${quizType} coding quizzes (${difficulty} difficulty) based on this learning context:
+
+${contextDesc}
+
+Each quiz should cover a different aspect of these topics. Generate code snippets that demonstrate the concepts.
+Respond with only a JSON array of ${count} quiz objects. ${uiLang === 'ko' ? 'All text must be in Korean.' : ''}`,
+  }
+
+  const { text } = await callAI(preset, [systemMessage, userMessage])
+  const parsedArray = extractJsonArrayFromResponse(text)
+  const language = detectLanguageFromTopics(step.topics)
+
+  return parsedArray.map((parsed) => ({
+    ...(parsed as Record<string, unknown>),
+    id: crypto.randomUUID(),
+    language,
+    sourceRepo: 'Learning Mode',
+    sourceFile: step.title,
+  })) as Quiz[]
+}
+
+/**
+ * Try to detect a programming language from topics.
+ * Falls back to 'javascript' if none detected.
+ */
+function detectLanguageFromTopics(topics: string[]): string {
+  const languageMap: Record<string, string> = {
+    javascript: 'javascript',
+    typescript: 'typescript',
+    python: 'python',
+    java: 'java',
+    'c++': 'cpp',
+    cpp: 'cpp',
+    'c#': 'csharp',
+    csharp: 'csharp',
+    go: 'go',
+    golang: 'go',
+    rust: 'rust',
+    ruby: 'ruby',
+    php: 'php',
+    swift: 'swift',
+    kotlin: 'kotlin',
+    react: 'javascript',
+    vue: 'javascript',
+    angular: 'typescript',
+    node: 'javascript',
+    nodejs: 'javascript',
+    deno: 'typescript',
+    html: 'html',
+    css: 'css',
+    sql: 'sql',
+  }
+
+  const joined = topics.join(' ').toLowerCase()
+  for (const [keyword, lang] of Object.entries(languageMap)) {
+    if (joined.includes(keyword)) return lang
+  }
+  return 'javascript'
 }

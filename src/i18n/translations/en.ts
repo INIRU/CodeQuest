@@ -105,6 +105,7 @@ const en = {
     prevQuestion: 'Previous Question',
     seriesComplete: 'Series Complete!',
     averageScore: 'Average Score',
+    backToLearning: 'Back to Learning',
   },
   // Quiz Generate Modal
   quizModal: {
@@ -223,6 +224,7 @@ const en = {
     completeAndReturn: 'Complete Step & Return',
     generating: 'Generating homework questions...',
     yourAnswer: 'Your answer',
+    quizType: 'Quiz Type',
   },
   // Common
   common: {

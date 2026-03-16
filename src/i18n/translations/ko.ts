@@ -100,6 +100,7 @@ const ko = {
     prevQuestion: '이전 문제',
     seriesComplete: '시리즈 완료!',
     averageScore: '평균 점수',
+    backToLearning: '학습으로 돌아가기',
   },
   quizModal: {
     title: '문제 생성',
@@ -213,6 +214,7 @@ const ko = {
     completeAndReturn: '완료하고 돌아가기',
     generating: '숙제 문제를 생성하고 있습니다...',
     yourAnswer: '답변 입력',
+    quizType: '문제 유형',
   },
   common: {
     back: '뒤로',

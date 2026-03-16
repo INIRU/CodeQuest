@@ -548,10 +548,26 @@ export default function QuizPage() {
                 })}
               </div>
 
-              <Button onClick={() => navigate('/explore')} style={{ marginTop: 8 }}>
-                {t('quiz.exploreBtn')}
-              </Button>
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <Button onClick={() => navigate('/explore')}>
+                  {t('quiz.exploreBtn')}
+                </Button>
+                {currentQuiz.sourceRepo === 'Learning Mode' && (
+                  <Button variant="secondary" onClick={() => navigate('/learn')}>
+                    {t('quiz.backToLearning')}
+                  </Button>
+                )}
+              </div>
             </Card>
+          )}
+
+          {/* Back to Learning button (non-series, after grading) */}
+          {!isSeries && isSubmitted && currentQuiz.sourceRepo === 'Learning Mode' && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+              <Button variant="secondary" onClick={() => navigate('/learn')}>
+                {t('quiz.backToLearning')}
+              </Button>
+            </div>
           )}
         </div>
 

@@ -27,14 +27,6 @@ export interface LearningPlan {
   createdAt: string
 }
 
-export interface HomeworkQuiz {
-  question: string
-  type: 'multiple-choice' | 'short-answer' | 'code'
-  options?: string[]
-  answer: string
-  explanation: string
-}
-
 function extractJson(text: string): string {
   const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
   if (codeBlockMatch) return codeBlockMatch[1].trim()
@@ -57,48 +49,6 @@ function parseJsonResponse<T>(text: string): T {
   }
 }
 
-function extractJsonArray<T>(text: string): T[] {
-  const raw = text.trim()
-
-  // 1. Try parsing raw text directly first (handles JSON with code blocks inside strings)
-  try {
-    const parsed = JSON.parse(raw)
-    if (Array.isArray(parsed)) return parsed as T[]
-    return [parsed] as T[]
-  } catch {
-    // fall through
-  }
-
-  // 2. Try finding [ to ] bracket range
-  const startBracket = raw.indexOf('[')
-  const endBracket = raw.lastIndexOf(']')
-  if (startBracket !== -1 && endBracket > startBracket) {
-    const arrayStr = raw.slice(startBracket, endBracket + 1)
-    try {
-      const parsed = JSON.parse(arrayStr)
-      if (Array.isArray(parsed)) return parsed as T[]
-    } catch {
-      // fall through
-    }
-  }
-
-  // 3. Last resort: try extracting from markdown code block
-  const codeBlockMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
-  if (codeBlockMatch) {
-    try {
-      const parsed = JSON.parse(codeBlockMatch[1].trim())
-      if (Array.isArray(parsed)) return parsed as T[]
-      return [parsed] as T[]
-    } catch {
-      // fall through
-    }
-  }
-
-  throw new Error(
-    `Failed to parse JSON array from AI response.\n\nRaw response:\n${text.slice(0, 500)}`,
-  )
-}
-
 const PLAN_SCHEMA = JSON.stringify(
   {
     title: 'Learning Plan Title',
@@ -116,20 +66,6 @@ const PLAN_SCHEMA = JSON.stringify(
       },
     ],
   },
-  null,
-  2,
-)
-
-const QUIZ_SCHEMA = JSON.stringify(
-  [
-    {
-      question: 'Question text',
-      type: 'multiple-choice',
-      options: ['A', 'B', 'C', 'D'],
-      answer: 'The correct answer',
-      explanation: 'Why this is correct',
-    },
-  ],
   null,
   2,
 )
@@ -248,44 +184,3 @@ Create a study plan that covers the key topics from this documentation. Infer th
   }
 }
 
-export async function generateHomeworkQuiz(
-  step: LearningStep,
-  language: string,
-): Promise<HomeworkQuiz[]> {
-  const { presets, activePresetKey } = useSettingsStore.getState()
-  const preset = presets[activePresetKey]
-  if (!preset) {
-    throw new Error(`No AI preset found for key "${activePresetKey}"`)
-  }
-
-  const langInstruction =
-    language === 'ko'
-      ? 'All text fields MUST be written in Korean.'
-      : 'All text fields MUST be written in English.'
-
-  const systemMessage: Message = {
-    role: 'system',
-    content: `You are an expert programming educator. You MUST respond with ONLY a valid JSON array. Do NOT include any text before or after the JSON. Do NOT wrap it in markdown code blocks.
-
-${langInstruction}
-
-Generate 3-5 quiz questions based on a learning step's topics and homework. Mix question types: multiple-choice, short-answer, and code challenges.
-
-The JSON must match this exact schema (an array of quiz objects):
-${QUIZ_SCHEMA}`,
-  }
-
-  const userMessage: Message = {
-    role: 'user',
-    content: `Generate quiz questions for this learning step:
-Title: ${step.title}
-Description: ${step.description}
-Topics: ${step.topics.join(', ')}
-Homework: ${step.homework}
-
-Create 3-5 quiz questions. ${language === 'ko' ? 'All text must be in Korean.' : ''}`,
-  }
-
-  const { text } = await callAI(preset, [systemMessage, userMessage])
-  return extractJsonArray<HomeworkQuiz>(text)
-}
